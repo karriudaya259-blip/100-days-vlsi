@@ -101,5 +101,46 @@
         </ul>
     </div>
 
+     <!-- ========== DAY 3 ========== -->
+    <div class="day">
+        <a href="day3.html">Day 3 – Universal Gates (NAND/NOR)</a><br>
+
+    <!DOCTYPE html>
+<html>
+<head><title>Day 3 – Universal Gates</title></head>
+<body>
+  <h1>Day 3 – Universal Gates (NAND & NOR)</h1>
+  
+  <h2>NAND as Universal Gate</h2>
+  <ul>
+    <li>NOT = NAND(A, A)</li>
+    <li>AND = NAND(NAND(A,B), NAND(A,B))</li>
+    <li>OR = NAND(NAND(A,A), NAND(B,B))</li>
+  </ul>
+  
+  <h2>NOR as Universal Gate</h2>
+  <ul>
+    <li>NOT = NOR(A, A)</li>
+    <li>OR = NOR(NOR(A,B), NOR(A,B))</li>
+    <li>AND = NOR(NOR(A,A), NOR(B,B))</li>
+  </ul>
+  
+  <h2>CMOS Implementation</h2>
+  <ul>
+    <li>NAND: PMOS parallel, NMOS series → 4 transistors</li>
+    <li>NOR: PMOS series, NMOS parallel → 4 transistors</li>
+    <li>NAND is faster (electrons > holes)</li>
+  </ul>
+  
+  <h2>Problems Solved (15/15)</h2>
+  <ul>
+    <li>Built NOT, AND, OR using only NAND</li>
+    <li>Built NOT, OR, AND using only NOR</li>
+    <li>CMOS schematics drawn</li>
+    <li>Transistor count comparisons</li>
+  </ul>
+</body>
+</html>
+
 </body>
 </html>
