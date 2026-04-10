@@ -177,52 +177,115 @@
         <!DOCTYPE html>
 <html>
 
+    <h3>Half Adder Truth Table</h3>
+<table border="1">
+  <tr>
+    <th>A</th><th>B</th><th>Sum (A⊕B)</th><th>Carry (A·B)</th>
+  </tr>
+  <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+  <tr><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+  <tr><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+  <tr><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+</table>
+<p>Sum = A ⊕ B &nbsp;&nbsp;|&nbsp;&nbsp; Carry = A · B</p>
+
+    <h3>Full Adder</h3>
+<table border="1">
+  <tr><th>A</th><th>B</th><th>Cin</th><th>Sum</th><th>Cout</th></tr>
+  <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+  <tr><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+  <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+  <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+  <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+  <tr><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+  <tr><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+  <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+</table>
+<p>Sum = A ⊕ B ⊕ Cin</p>
+<p>Cout = (A·B) + (Cin·(A⊕B))</p>
+<h3>2:1 Multiplexer Truth Table</h3>
+<table border="1">
+  <tr>
+    <th>Select (S)</th><th>Output (Y)</th>
+  </tr>
+  <tr><td>0</td><td>Y = I0</td></tr>
+  <tr><td>1</td><td>Y = I1</td></tr>
+</table>
+<p>Y = S'·I0 + S·I1</p>
+    
+  <h3>4:1 Multiplexer Truth Table</h3>
+<table border="1">
+  <tr>
+    <th>S1</th><th>S0</th><th>Output (Y)</th>
+  </tr>
+  <tr><td>0</td><td>0</td><td>Y = I0</td></tr>
+  <tr><td>0</td><td>1</td><td>Y = I1</td></tr>
+  <tr><td>1</td><td>0</td><td>Y = I2</td></tr>
+  <tr><td>1</td><td>1</td><td>Y = I3</td></tr>
+</table>
+<p>Y = S1'·S0'·I0 + S1'·S0·I1 + S1·S0'·I2 + S1·S0·I3</p>
   
-  <h2>Half Adder (ASCII)</h2>
+<h3>1:2 Demultiplexer Truth Table</h3>
+<table border="1">
+  <tr>
+    <th>Select (S)</th><th>Y0</th><th>Y1</th>
+  </tr>
+  <tr><td>0</td><td>Y0 = I</td><td>Y1 = 0</td></tr>
+  <tr><td>1</td><td>Y0 = 0</td><td>Y1 = I</td></tr>
+</table>
+<p>Y0 = I·S' &nbsp;&nbsp;|&nbsp;&nbsp; Y1 = I·S</p>
+
+  <h3>1:4 Demultiplexer Truth Table</h3>
+<table border="1">
+  <tr>
+    <th>S1</th><th>S0</th><th>Y0</th><th>Y1</th><th>Y2</th><th>Y3</th>
+  </tr>
+  <tr><td>0</td><td>0</td><td>I</td><td>0</td><td>0</td><td>0</td></tr>
+  <tr><td>0</td><td>1</td><td>0</td><td>I</td><td>0</td><td>0</td></tr>
+  <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>I</td><td>0</td></tr>
+  <tr><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>I</td></tr>
+</table>
+<p>
+  Y0 = I·S1'·S0'<br>
+  Y1 = I·S1'·S0<br>
+  Y2 = I·S1·S0'<br>
+  Y3 = I·S1·S0
+</p>  
+    
+<!DOCTYPE html>
+<html>
+<head><title>Day 4 – Combinational Circuits</title></head>
+<body>
+  <h1>Day 4 – Combinational Circuits</h1>
+  
+  <h2>Half Adder</h2>
+  [Half Adder Truth Table HTML]
+  
+  <h2>Full Adder</h2>
+  [Full Adder Truth Table HTML]
+  
+  <h2>2:1 Multiplexer</h2>
+  [2:1 MUX Truth Table HTML]
+  
+  <h2>4:1 Multiplexer</h2>
+  [4:1 MUX Truth Table HTML]
+  
+  <h2>1:2 Demultiplexer</h2>
+  [1:2 DEMUX Truth Table HTML]
+  
+  <h2>1:4 Demultiplexer</h2>
+  [1:4 DEMUX Truth Table HTML]
+  
+  <h2>ASCII Diagrams</h2>
   <pre>
-A ──┬── [XOR] ── Sum
-    │
-    └── [AND] ── Carry
-B ──┘
-  </pre>
-  
-  <h2>Full Adder (ASCII)</h2>
-  <pre>
-A ──┬── [XOR] ──┬── [XOR] ── Sum
-    │           │
-B ──┼── [AND] ──┘
-    │
-    └── [AND] ──┬── [OR] ── Carry Out
-Cin ───────────┘
-  </pre>
-  
-  <h2>2:1 Multiplexer (ASCII)</h2>
-  <pre>
-I0 ──┬── [AND] ──┐
-     │           │
-S' ──┘           ├── [OR] ── Y
-I1 ──┬── [AND] ──┘
-     │
-S ───┘
-  </pre>
-  
-  <h2>1:2 Demultiplexer (ASCII)</h2>
-  <pre>
-I ──┬── [AND] ── Y0
-    │     │
-S' ──┘     │
-          │
-I ──┬── [AND] ── Y1
-    │     │
-S ──┘     │
-  </pre>
-  
+</body>
+</html>
+    
   <h2>Problems Solved</h2>
   <ul>
     <li>Half adder, full adder, ripple carry adder</li>
     <li>2:1 and 4:1 multiplexers</li>
     <li>1:2 and 1:4 demultiplexers</li>
-    <li>ASCII diagrams for all circuits</li>
     <li>Total: 20/20 problems</li>
   </ul>
 </body>
