@@ -292,6 +292,48 @@
   </ul>
 </body>
 </html>
+<!DOCTYPE html>
+<html>
+<head><title>Day 5 – Carry Look-ahead Adder</title></head>
+<body>
+  <h1>Day 5 – Carry Look-ahead Adder (CLA)</h1>
+  
+  <h2>Why CLA?</h2>
+  <p>Ripple Carry Adder delay = 2N gate delays. For 32 bits: 64 delays. Too slow.</p>
+  <p>CLA delay = constant (4 gate delays for 4 bits).</p>
+  
+  <h2>Carry Generate (G) and Propagate (P)</h2>
+  <p>Gi = Ai · Bi</p>
+  <p>Pi = Ai ⊕ Bi</p>
+  <p>Carry out: Ci+1 = Gi + Pi·Ci</p>
+  
+  <h2>4-bit CLA Carries</h2>
+  <pre>
+C1 = G0 + P0·C0
+C2 = G1 + P1·G0 + P1·P0·C0
+C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0
+C4 = G3 + P3·G2 + P3·P2·G1 + P3·P2·P1·G0 + P3·P2·P1·P0·C0
+  </pre>
+  
+  <h2>Delay Calculation</h2>
+  <ul>
+    <li>Compute Pi, Gi: 1 gate delay</li>
+    <li>Compute carries: 2 gate delays</li>
+    <li>Compute sums: 1 gate delay</li>
+    <li><strong>Total: 4 gate delays</strong></li>
+  </ul>
+  
+  <h2>Problems Solved</h2>
+  <ul>
+    <li>10 morning problems + 5 evening problems = 15/15</li>
+    <li>G,P calculations for all bits</li>
+    <li>Carry expressions derived</li>
+    <li>Delay comparisons with RCA</li>
+  </ul>
+</body>
+</html>
+
+      
 
 </body>
 </html>
