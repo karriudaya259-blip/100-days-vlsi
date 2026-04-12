@@ -333,6 +333,110 @@ C4 = G3 + P3·G2 + P3·P2·G1 + P3·P2·P1·G0 + P3·P2·P1·P0·C0
 </body>
 </html>
 
+
+
+      <!DOCTYPE html>
+<html>
+<head>
+    <title>Day 6 – Latches & Flip-Flops</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { color: #0066cc; }
+        h2 { color: #004499; margin-top: 30px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .diagram { font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Day 6 – Latches & Flip‑Flops: The Memory Cells of Digital Design</h1>
+    <p><strong>Date:</strong> April 12, 2026</p>
+
+    <h2>1. Etymology & Definition</h2>
+    <p>The term <strong>latch</strong> derives from the Old English <em>læccan</em>, meaning "to seize or hold" – reflecting its ability to <strong>capture and retain</strong> a single bit of data. <strong>Flip‑flop</strong> is an onomatopoeic term from early computing, mimicking the sound of a circuit toggling between two stable states.</p>
+    <p>In digital electronics, a <strong>latch</strong> is a <strong>level‑sensitive</strong> bistable multivibrator: its output follows the input while an enable signal is active, and <strong>latches</strong> (holds) the last value when enable is deactivated. A <strong>flip‑flop</strong> is an <strong>edge‑triggered</strong> variant: it samples the input only on a <strong>clock edge</strong> (rising or falling), ignoring input changes at all other times. Flip‑flops are the fundamental building blocks of synchronous sequential circuits – registers, counters, and finite state machines (FSMs).</p>
+
+    <h2>2. Core Principles (4 Foundational Pillars)</h2>
+    <ul>
+        <li><strong>Bistability:</strong> Cross‑coupled NAND or NOR gates create positive feedback. Two stable states (0 or 1) are maintained indefinitely without input. This is the physical basis of memory.</li>
+        <li><strong>Level vs. Edge Sensitivity:</strong> Latches are transparent when enable = 1 (or 0). Flip‑flops are edge‑triggered – they sample input only on a clock transition. Edge triggering eliminates race conditions and enables synchronous design (all state changes aligned to a global clock).</li>
+        <li><strong>Characteristic & Excitation Tables:</strong> The characteristic table defines the next state Q(t+1) given current state Q(t) and inputs. The excitation table is the inverse: given desired Q(t)→Q(t+1), it shows required inputs. These tables are essential for state machine synthesis and flip‑flop conversion (e.g., JK to D).</li>
+        <li><strong>Timing Parameters:</strong> Setup time (data must be stable before clock edge), hold time (data stable after clock edge), propagation delay (clock‑to‑output). Violating these causes metastability – an unpredictable, non‑digital state.</li>
+    </ul>
+
+    <h2>3. Mechanism (Step‑by‑Step)</h2>
+    <h3>D Latch (Level‑Sensitive)</h3>
+    <ul>
+        <li><strong>Enable = 1:</strong> Output Q follows D (transparent).</li>
+        <li><strong>Enable = 0:</strong> Output Q holds the last value (latched).</li>
+    </ul>
+    <h3>D Flip‑Flop (Edge‑Triggered)</h3>
+    <ul>
+        <li><strong>Rising clock edge (↑):</strong> Q = D (sampled).</li>
+        <li><strong>Otherwise:</strong> Q unchanged.</li>
+    </ul>
+    <h3>JK Flip‑Flop</h3>
+    <ul>
+        <li><strong>J=0, K=0:</strong> Hold (Q unchanged).</li>
+        <li><strong>J=0, K=1:</strong> Reset (Q=0).</li>
+        <li><strong>J=1, K=0:</strong> Set (Q=1).</li>
+        <li><strong>J=1, K=1:</strong> Toggle (Q = ~Q).</li>
+    </ul>
+    <h3>T Flip‑Flop</h3>
+    <ul>
+        <li><strong>T=0:</strong> Hold.</li>
+        <li><strong>T=1:</strong> Toggle.</li>
+    </ul>
+
+    <h2>4. Hierarchical Diagram (Text‑Based)</h2>
+    <div class="diagram">
+        <pre>
+        Clock ──┐
+                ▼
+        ┌─────────────────┐
+Data ──► │ D Flip‑Flop     │ ──► Q
+        │ (rising edge)   │
+        └─────────────────┘
+                    │
+                    ▼
+        Used in: Registers, Counters, FSMs
+
+        Register: 4 D-FFs with common clock
+        ┌───┐     ┌───┐     ┌───┐     ┌───┐
+        │FF0│     │FF1│     │FF2│     │FF3│
+        └─┬─┘     └─┬─┘     └─┬─┘     └─┬─┘
+          │         │         │         │
+          └─────────┴─────────┴─────────┘
+                    Common Clock
+        </pre>
+    </div>
+
+    <h2>5. Critical Analysis</h2>
+    <ul>
+        <li><strong>Pros:</strong> Simple, reliable, foundational for sequential logic. Flip‑flops enable synchronous design, eliminating race conditions.</li>
+        <li><strong>Cons:</strong> Latches are transparent – if used in a clocked system, they can cause race conditions and unintended latches. Modern synchronous designs use edge‑triggered flip‑flops exclusively for registers.</li>
+        <li><strong>Modern Applications:</strong> Registers, counters, frequency dividers, state machines, memory arrays (SRAM uses latches as bit cells).</li>
+        <li><strong>Academic Debates:</strong> Latch vs. flip‑flop in ASIC design – some low‑power designs use latches, but mainstream digital design favors edge‑triggered flip‑flops.</li>
+    </ul>
+
+    <h2>6. Real‑World Uses</h2>
+    <ul>
+        <li><strong>Registers:</strong> Multiple D‑FFs sharing a common clock (e.g., 8‑bit register in CPU).</li>
+        <li><strong>Counters:</strong> Ripple counters (T‑FFs), synchronous up/down counters.</li>
+        <li><strong>Frequency Dividers:</strong> T‑FF toggles each clock cycle, dividing frequency by 2.</li>
+        <li><strong>State Machines:</strong> Traffic light controllers, sequence detectors.</li>
+        <li><strong>Memory Arrays:</strong> SRAM uses cross‑coupled inverters (similar to latches) as bit cells.</li>
+    </ul>
+
+    <h2>7. Conclusion & Synthesis</h2>
+    <p>Latches and flip‑flops are the <strong>atomic memory units</strong> of every digital system. Without them, no state retention – no processors, no counters, no computers. Understanding their operation, timing, and application is <strong>essential</strong> for any VLSI or digital design engineer. Mastery of sequential circuits is a prerequisite for advanced topics like pipelines, caches, and microarchitectures.</p>
+
+    <hr>
+    <p><strong>Next:</strong> Verilog implementation of D flip‑flop and 4‑bit register.</p>
+    <p><a href="index.html">← Back to Main</a></p>
+</body>
+</html>
       
 
 </body>
