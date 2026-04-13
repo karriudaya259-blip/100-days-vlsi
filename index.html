@@ -435,6 +435,153 @@ Data ──► │ D Flip‑Flop     │ ──► Q
     
 </body>
 </html>
+
+
+
+
+      <!DOCTYPE html>
+<html>
+<head>
+    <title>Day 7 – JK Flip‑Flop: The Workhorse of Sequential Logic</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { color: #0066cc; }
+        h2 { color: #004499; margin-top: 30px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .diagram { font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Day 7 – JK Flip‑Flop: The Workhorse of Sequential Logic</h1>
+   
+
+    <h2>1. Why JK Flip‑Flop?</h2>
+    <p>The JK flip‑flop improves upon the SR flip‑flop by <strong>eliminating the invalid state</strong> (S=1,R=1) and introducing a <strong>toggle mode</strong> (J=1,K=1). It is the most versatile sequential element, used in counters, frequency dividers, and finite state machines.</p>
+
+    <h2>2. Characteristic Table & Equation</h2>
+    <p>The characteristic table defines the next state Q(t+1) based on current state Q(t) and inputs J,K.</p>
+    <table>
+        <tr><th>J</th><th>K</th><th>Q(t)</th><th>Q(t+1)</th><th>Operation</th></tr>
+        <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>Hold</td></tr>
+        <tr><td>0</td><td>0</td><td>1</td><td>1</td><td>Hold</td></tr>
+        <tr><td>0</td><td>1</td><td>0</td><td>0</td><td>Reset</td></tr>
+        <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>Reset</td></tr>
+        <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>Set</td></tr>
+        <tr><td>1</td><td>0</td><td>1</td><td>1</td><td>Set</td></tr>
+        <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>Toggle</td></tr>
+        <tr><td>1</td><td>1</td><td>1</td><td>0</td><td>Toggle</td></tr>
+    </table>
+    <p><strong>Characteristic equation:</strong> <code>Q(t+1) = J · Q'(t) + K' · Q(t)</code></p>
+
+    <h2>3. Excitation Table (Inverse)</h2>
+    <p>Used for state machine synthesis: given desired Q(t)→Q(t+1), find required J,K.</p>
+    <table>
+        <tr><th>Q(t) → Q(t+1)</th><th>J</th><th>K</th></tr>
+        <tr><td>0 → 0</td><td>0</td><td>X (don't care)</td></tr>
+        <tr><td>0 → 1</td><td>1</td><td>X</td></tr>
+        <tr><td>1 → 0</td><td>X</td><td>1</td></tr>
+        <tr><td>1 → 1</td><td>X</td><td>0</td></tr>
+    </table>
+
+    <h2>4. Master‑Slave JK Flip‑Flop (Race Condition Solution)</h2>
+    <p>A simple JK latch (level‑sensitive) oscillates when J=K=1 and clock is high – called a <strong>race condition</strong>. The <strong>master‑slave</strong> configuration solves it:</p>
+    <ul>
+        <li><strong>Master stage</strong> samples J,K on the <strong>positive clock edge</strong>.</li>
+        <li><strong>Slave stage</strong> outputs the master’s state on the <strong>negative clock edge</strong>.</li>
+        <li><strong>Result:</strong> Only one toggle per clock cycle, no oscillation.</li>
+    </ul>
+    <div class="diagram">
+        <pre>
+        Clock ──┬── Master ──┬── Slave ── Q
+                │            │
+                └── Inverter ─┘ (slave clock inverted)
+        </pre>
+    </div>
+
+    <h2>5. Toggle Mode & Frequency Division</h2>
+    <ul>
+        <li>When <strong>J=1, K=1</strong>, output toggles on every clock edge → <strong>frequency divider by 2</strong>.</li>
+        <li>Cascade <strong>n</strong> JK flip‑flops (each in toggle mode) → divide frequency by <strong>2ⁿ</strong>.</li>
+        <li>Used in <strong>binary counters, digital clocks, and frequency synthesizers</strong>.</li>
+    </ul>
+
+    <h2>6. Real‑World JK Flip‑Flop ICs</h2>
+    <ul>
+        <li><strong>74LS73</strong> – Dual JK flip‑flop with clear (TTL logic, used in counters).</li>
+        <li><strong>74HC109</strong> – Dual JK with preset and clear (high‑speed CMOS).</li>
+        <li><strong>CD4027</strong> – CMOS dual JK (low power, battery‑friendly).</li>
+    </ul>
+
+    <h2>7. Applications of JK Flip‑Flop</h2>
+    <ul>
+        <li><strong>Binary counters</strong> – ripple and synchronous counters (e.g., 4‑bit up counter).</li>
+        <li><strong>Frequency dividers</strong> – divide clock frequency for digital watches, microcontrollers.</li>
+        <li><strong>Shift registers</strong> – JK configured as D flip‑flop (J=K) for data storage.</li>
+        <li><strong>Sequence detectors</strong> – state machines for pattern recognition (e.g., 101 sequence).</li>
+        <li><strong>Traffic light controllers</strong> – FSM with JK flip‑flops for each state.</li>
+        <li><strong>Random number generators</strong> – Linear Feedback Shift Registers (LFSR) using toggle mode.</li>
+        <li><strong>Debounce circuits</strong> – JK latch to clean noisy switch inputs.</li>
+        <li><strong>PWM generators</strong> – JK flip‑flops create variable duty cycle signals.</li>
+    </ul>
+
+    <h2>8. Synthesis</h2>
+    <p>The JK flip‑flop is the most functionally complete sequential element. It can be configured as any other flip‑flop (D, T, SR). Master it, and you master counters, dividers, and finite state machines – the backbone of digital systems.</p>
+
+</body>
+</html>
+  <!DOCTYPE html>
+<html>
+<head>
+    <title>Day 8 – T Flip‑Flop and D Flip‑Flop</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { color: #0066cc; }
+        h2 { color: #004499; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h2>T Flip‑Flop (Toggle)</h2>
+    <p>Derived from JK by tying J=K=T. Characteristic: <code>Q(t+1) = T ⊕ Q(t)</code></p>
+    <table>
+        <tr><th>T</th><th>Q(t)</th><th>Q(t+1)</th><th>Operation</th></tr>
+        <tr><td>0</th><td>0</td><td>0</td><td>Hold</td></tr>
+        <tr><td>0</th><td>1</td><td>1</td><td>Hold</td></tr>
+        <tr><td>1</th><td>0</td><td>1</td><td>Toggle</td></tr>
+        <tr><td>1</th><td>1</td><td>0</td><td>Toggle</td></tr>
+    </table>
+    <p><strong>Excitation table:</strong> 0→0: T=0; 0→1: T=1; 1→0: T=1; 1→1: T=0.</p>
+    <p><strong>Applications:</strong> Frequency dividers, ripple counters, binary counters.</p>
+
+    <h2>D Flip‑Flop (Data)</h2>
+    <p>Simplest edge‑triggered storage. Characteristic: <code>Q(t+1) = D</code></p>
+    <table>
+        <tr><th>D</th><th>Q(t+1)</th></tr>
+        <tr><td>0</th><td>0</td></tr>
+        <tr><td>1</th><td>1</td></tr>
+    </table>
+    <p><strong>Excitation table:</strong> Q(t+1)=D (no dependency on Q(t)).</p>
+    <p><strong>Applications:</strong> Registers, shift registers, pipeline stages, data synchronization.</p>
+
+    <h2>Comparison Table</h2>
+    <table>
+        <tr><th>Feature</th><th>T Flip‑Flop</th><th>D Flip‑Flop</th></tr>
+        <tr><td>Characteristic</td><td>Q ⊕ T</td><td>D</td></tr>
+        <tr><td>Toggle ability</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Primary use</td><td>Counting, dividing</td><td>Storing, delaying</td></tr>
+        <tr><td>IC example</td><td>From JK (e.g., 74LS73)</td><td>74LS74, 74HC374</td></tr>
+    </table>
+
+    <h2>Synthesis</h2>
+    <p>D flip‑flops are the workhorses of datapath storage (registers, caches). T flip‑flops are the heart of counters and frequency dividers. Together with JK, they form the complete sequential logic toolkit.</p>
+
+</body>
+</html>
       
 
 </body>
