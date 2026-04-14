@@ -583,38 +583,232 @@ Data ──► │ D Flip‑Flop     │ ──► Q
 </body>
 </html>
 
-
-      <!DOCTYPE html>
-<html>
-<head><title>Day 8 – Registers and Shift Registers</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 8 – Registers & Shift Registers</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #1e1e2a;
+        }
+        h1 {
+            color: #0066cc;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #004499;
+            margin-top: 35px;
+            border-left: 5px solid #0066cc;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #222;
+            margin-top: 25px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #e6f0ff;
+            font-weight: bold;
+        }
+        .diagram {
+            background: #1e1e2a;
+            color: #d4d4d4;
+            font-family: monospace;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 10px 0 20px 20px;
+        }
+        hr {
+            margin: 40px 0;
+        }
+    </style>
+</head>
 <body>
-<h1>Day 8 – Registers and Shift Registers</h1>
 
-<h2>1. Registers</h2>
-<p>Group of D flip‑flops with common clock. Stores N bits in parallel.</p>
+<h1>Day 8 – Registers and Shift Registers</h1>
+<p><strong>Date:</strong> April 14, 2026 | <strong>Topic:</strong> Sequential Logic – Data Storage and Movement</p>
+
+<p>Single flip‑flops store 1 bit. To store multiple bits or move data, we combine flip‑flops into <strong>registers</strong> and <strong>shift registers</strong>. These are the building blocks of CPU registers, memory interfaces, and serial communication.</p>
+
+<h2>1. Parallel Registers</h2>
+<p>A <strong>register</strong> is a group of <strong>D flip‑flops</strong> sharing a common clock and common reset. All flip‑flops update simultaneously on the clock edge.</p>
+
+<h3>4‑bit Register Structure</h3>
+<div class="diagram">
+<pre>
+      D3   D2   D1   D0
+      │    │    │    │
+      ▼    ▼    ▼    ▼
+    ┌──┐ ┌──┐ ┌──┐ ┌──┐
+    │FF│ │FF│ │FF│ │FF│  (common clock and reset)
+    └──┘ └──┘ └──┘ └──┘
+      │    │    │    │
+      ▼    ▼    ▼    ▼
+      Q3   Q2   Q1   Q0
+</pre>
+</div>
+
+<h3>Operation</h3>
+<ul>
+    <li>On <strong>rising clock edge</strong>, each flip‑flop copies its D input to Q output.</li>
+    <li>All bits are stored <strong>in parallel</strong> – no shifting.</li>
+</ul>
+
+<h3>Applications</h3>
+<ul>
+    <li>CPU registers (accumulator, program counter, general‑purpose registers)</li>
+    <li>Memory address registers (MAR)</li>
+    <li>Memory data registers (MDR)</li>
+    <li>I/O port latches</li>
+</ul>
 
 <h2>2. Shift Registers</h2>
+<p>A <strong>shift register</strong> is a cascade of flip‑flops where the output of one is connected to the input of the next. Data moves (shifts) left or right on each clock pulse.</p>
+
+<h3>Types of Shift Registers</h3>
+<table>
+    <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Typical Use</th>
+    </tr>
+    <tr>
+        <td><strong>SISO</strong></td>
+        <td>Serial In – Serial Out</td>
+        <td>One input, one output. Data enters bit by bit, exits bit by bit after N clocks.</td>
+        <td>Time delay, random number generators (LFSR)</td>
+    </tr>
+    <tr>
+        <td><strong>SIPO</strong></td>
+        <td>Serial In – Parallel Out</td>
+        <td>One input, multiple outputs. After N clocks, all N bits are available in parallel.</td>
+        <td>Receiving serial data (e.g., from SPI sensor)</td>
+    </tr>
+    <tr>
+        <td><strong>PISO</strong></td>
+        <td>Parallel In – Serial Out</td>
+        <td>Multiple inputs, one output. Load in parallel, then shift out serially.</td>
+        <td>Transmitting parallel data (e.g., to a serial display)</td>
+    </tr>
+    <tr>
+        <td><strong>PIPO</strong></td>
+        <td>Parallel In – Parallel Out</td>
+        <td>Load and read in parallel. Behaves like a simple register.</td>
+        <td>Data storage without shifting</td>
+    </tr>
+</table>
+
+<h3>Example: 4‑bit SISO shift register (right shift)</h3>
+<div class="diagram">
+<pre>
+Serial In ──┬── [FF0] ──┬── [FF1] ──┬── [FF2] ──┬── [FF3] ── Serial Out
+            │           │           │           │
+            └─ Clock ────┴───────────┴───────────┘
+</pre>
+</div>
+
+<p><strong>Truth table (starting from all zeros, serial input = 1,0,1,1):</strong></p>
+<table>
+    <tr><th>Clock</th><th>Input</th><th>Q3</th><th>Q2</th><th>Q1</th><th>Q0</th></tr>
+    <tr><td>0</td><td>–</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>2</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+    <tr><td>3</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+    <tr><td>4</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+</table>
+<p>After 4 clocks, the first input bit (1) appears at Serial Out.</p>
+
+<h3>Real‑World ICs</h3>
 <ul>
-  <li><strong>SISO</strong>: Serial In – Serial Out (delay line)</li>
-  <li><strong>SIPO</strong>: Serial In – Parallel Out (serial‑to‑parallel)</li>
-  <li><strong>PISO</strong>: Parallel In – Serial Out (parallel‑to‑serial)</li>
-  <li><strong>PIPO</strong>: Parallel In – Parallel Out (storage register)</li>
+    <li><strong>74HC595</strong> – 8‑bit SIPO shift register (LED drivers, output expansion)</li>
+    <li><strong>74HC165</strong> – 8‑bit PISO shift register (input expansion, button scanning)</li>
+    <li><strong>74LS164</strong> – 8‑bit SISO/SIPO</li>
 </ul>
 
-<h2>3. Ripple Counter</h2>
-<p>T flip‑flops cascaded. Each stage divides frequency by 2. Delay accumulates.</p>
+<h2>3. Ripple Counters (Frequency Dividers)</h2>
+<p>A <strong>ripple counter</strong> uses T flip‑flops (toggle mode) cascaded. The output of one flip‑flop drives the clock of the next. Each stage divides the frequency by 2.</p>
 
-<h2>Problems solved</h2>
+<div class="diagram">
+<pre>
+Clock ──┬── [T‑FF0] ── Q0 (LSB)
+        │      │
+        └──────┼── [T‑FF1] ── Q1
+               │      │
+               └──────┼── [T‑FF2] ── Q2 (MSB)
+</pre>
+</div>
+
+<h3>2‑bit Ripple Counter (binary up counter)</h3>
+<table>
+    <tr><th>Clock pulse</th><th>Q1</th><th>Q0</th><th>Count</th></tr>
+    <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+    <tr><td>2</td><td>1</td><td>0</td><td>2</td></tr>
+    <tr><td>3</td><td>1</td><td>1</td><td>3</td></tr>
+    <tr><td>4</td><td>0</td><td>0</td><td>0 (rollover)</td></tr>
+</table>
+
+<h3>Characteristics</h3>
 <ul>
-  <li>4‑bit SISO diagram drawn</li>
-  <li>SIPO load cycles calculated</li>
-  <li>Ripple counter output after 5 clocks</li>
-  <li>Maximum count of 3‑bit counter</li>
-  <li>Real‑world PISO example</li>
+    <li><strong>Propagation delay</strong>: Worst‑case delay = N × (delay of one FF). For large N, ripple counters are slow.</li>
+    <li><strong>Power</strong>: Lower than synchronous counters because only one FF toggles per clock.</li>
+    <li><strong>Applications</strong>: Frequency dividers, digital clocks, low‑speed event counters.</li>
 </ul>
+
+<h2>4. Problems Solved (Day 8)</h2>
+<ol>
+    <li><strong>Draw a 4‑bit SISO shift register using D flip‑flops.</strong> → Diagram above.</li>
+    <li><strong>How many clock cycles to load 8 bits into an 8‑bit SIPO shift register?</strong> → 8 cycles.</li>
+    <li><strong>A 4‑bit ripple counter starts at 0000. After 5 clock pulses, what is the output?</strong> → 0101 (binary 5).</li>
+    <li><strong>What is the maximum count of a 3‑bit ripple counter?</strong> → 7 (111 binary).</li>
+    <li><strong>Give one real‑world use of a PISO shift register.</strong> → Reading multiple push buttons with few I/O pins (e.g., 74HC165).</li>
+</ol>
+
+<h2>5. Why This Matters for VLSI and GATE</h2>
+<ul>
+    <li>Shift registers are the core of <strong>serial communication protocols</strong> (SPI, I²C, UART).</li>
+    <li>Counters are used in <strong>digital clocks, timers, and frequency synthesizers</strong>.</li>
+    <li>Registers are everywhere in <strong>CPU datapaths and memory systems</strong>.</li>
+    <li>GATE EC/CS frequently asks about shift register operations and counter design.</li>
+</ul>
+
+<div class="note">
+    <strong>Next:</strong> Verilog implementation of shift registers and counters. Also, Week 1 Project #2: Simulating a 4‑bit shift register in Verilog.
+</div>
+
+<hr>
+<p><a href="index.html">← Back to main portfolio</a></p>
 </body>
 </html>
-      
 
 </body>
 </html>
