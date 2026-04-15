@@ -801,6 +801,218 @@ Clock ──┬── [T‑FF0] ── Q0 (LSB)
     <li>GATE EC/CS frequently asks about shift register operations and counter design.</li>
 </ul>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 9 – Synchronous Counters & Finite State Machines</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            background-color: #fefefe;
+            color: #1e2a3e;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e7f0ff;
+            font-weight: 600;
+        }
+        .diagram {
+            background: #1e2a3e;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .note {
+            background: #fff4e5;
+            border-left: 5px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 10px 0 20px 25px;
+        }
+        hr {
+            margin: 40px 0;
+        }
+        .app-list {
+            background: #f0f7ff;
+            padding: 15px 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Day 9 – Synchronous Counters & Finite State Machines (FSM)</h1>
+<p>| <strong>Topic:</strong> Sequential Logic – Counters and State Machines</p>
+
+<p>Synchronous counters eliminate ripple delay by clocking all flip‑flops simultaneously. Finite state machines (FSM) are the backbone of all sequential control – from traffic lights to CPU control units.</p>
+
+<h2>1. Synchronous Counters</h2>
+<p>All flip‑flops receive the <strong>same clock</strong>. Toggle conditions are derived from lower‑order bits using combinational logic.</p>
+
+<h3>2‑bit synchronous up counter (using T flip‑flops)</h3>
+<ul>
+    <li>T0 = 1 (always toggles)</li>
+    <li>T1 = Q0 (toggles only when Q0 = 1)</li>
+</ul>
+<div class="diagram">
+<pre>
+Clock ──┬── T‑FF0 ── Q0 (LSB)
+        │
+        └── T‑FF1 (T1 = Q0) ── Q1 (MSB)
+</pre>
+</div>
+
+<h3>4‑bit synchronous up counter toggle equations</h3>
+<ul>
+    <li>T0 = 1</li>
+    <li>T1 = Q0</li>
+    <li>T2 = Q1 · Q0</li>
+    <li>T3 = Q2 · Q1 · Q0</li>
+</ul>
+
+<p>These equations ensure each bit toggles exactly when all lower bits are 1 – same as binary addition.</p>
+
+<h3>Mod‑N counters</h3>
+<p>Counts from 0 to N‑1 and resets. For a <strong>mod‑6</strong> counter (0→1→2→3→4→5→0):</p>
+<ul>
+    <li>3 flip‑flops (2³ = 8 ≥ 6)</li>
+    <li>Detect state 6 (binary 110) using a NAND gate on Q2 and Q1.</li>
+    <li>Connect NAND output to asynchronous clear or synchronous load.</li>
+</ul>
+
+<h2>2. Ring Counter & Johnson Counter</h2>
+
+<h3>Ring counter</h3>
+<p>A shift register with feedback from the last output to the first input. Only one '1' circulates.</p>
+<ul>
+    <li>N flip‑flops → N states.</li>
+    <li>Example (4‑bit): 1000 → 0100 → 0010 → 0001 → 1000...</li>
+    <li><strong>Applications:</strong> State machines, timing generators, control sequencers.</li>
+</ul>
+
+<h3>Johnson counter (twisted ring)</h3>
+<p>Feedback from the inverted output of the last flip‑flop.</p>
+<ul>
+    <li>N flip‑flops → 2N states.</li>
+    <li>Example (3‑bit): 000 → 100 → 110 → 111 → 011 → 001 → 000...</li>
+    <li><strong>Applications:</strong> Decoders, frequency dividers, sequence generators.</li>
+</ul>
+
+<h2>3. Self‑Starting Counters</h2>
+<p>A counter that reaches the valid sequence from <strong>any</strong> initial state (including unused states).</p>
+<ul>
+    <li>Prevents lock‑up in illegal states – critical in real hardware.</li>
+    <li>Achieved by designing next‑state logic so that all unused states eventually lead to a valid state.</li>
+    <li><strong>Real‑world importance:</strong> Power‑up or glitch recovery – without self‑starting, the circuit may freeze.</li>
+</ul>
+
+<h2>4. Finite State Machines (FSM)</h2>
+<p>An FSM has <strong>states, inputs, outputs, next‑state logic, and output logic</strong>. Two common types:</p>
+
+<table>
+    <tr><th>Feature</th><th>Mealy FSM</th><th>Moore FSM</th></tr>
+    <tr><td>Output depends on</td><td>Present state + inputs</td><td>Present state only</td></tr>
+    <tr><td>Speed</td><td>Faster (output can change without clock)</td><td>Slower (output changes only on clock edge)</td></tr>
+    <tr><td>Number of states</td><td>Usually fewer</td><td>Usually more</td></tr>
+    <tr><td>Example</td><td>UART receiver, sequence detector</td><td>Traffic light controller, vending machine</td></tr>
+</table>
+
+<h3>FSM Design Example: 101 Sequence Detector (Mealy)</h3>
+<p>Detects the pattern "101" in a serial bit stream. Output = 1 when pattern is found.</p>
+
+<p><strong>State diagram (simplified):</strong></p>
+<div class="diagram">
+<pre>
+     0/0
+S0 ─────► S0
+ │
+ │1/0
+ ▼
+S1 ──0/0──► S2 ──1/1──► (output 1) ──► S1
+ │                  │
+ └────1/0───────────┘
+</pre>
+</div>
+
+<p><strong>State assignment:</strong> S0=00, S1=01, S2=10.</p>
+
+<table>
+    <tr><th>Present state</th><th>Input</th><th>Next state</th><th>Output (Mealy)</th></tr>
+    <tr><td>00</td><td>0</td><td>00</td><td>0</td></tr>
+    <tr><td>00</td><td>1</td><td>01</td><td>0</td></tr>
+    <tr><td>01</td><td>0</td><td>10</td><td>0</td></tr>
+    <tr><td>01</td><td>1</td><td>01</td><td>0</td></tr>
+    <tr><td>10</td><td>0</td><td>00</td><td>0</td></tr>
+    <tr><td>10</td><td>1</td><td>01</td><td>1</td></tr>
+</table>
+
+<p>From this table, next‑state and output logic can be derived using K‑maps (implemented with combinational gates and D flip‑flops).</p>
+
+<h3>State Reduction (FSM optimization)</h3>
+<p>Two states are <strong>equivalent</strong> if they produce the same output and lead to equivalent next states for all input combinations. Reducing states simplifies the circuit.</p>
+<ul>
+    <li><strong>Method:</strong> Implication table or row matching.</li>
+    <li><strong>Example:</strong> Two states with identical next state and output can be merged.</li>
+    <li><strong>Real‑world benefit:</strong> Fewer flip‑flops → lower area and power.</li>
+</ul>
+
+<h2>5. Real‑World Applications</h2>
+<div class="app-list">
+<ul>
+    <li><strong>Synchronous counters:</strong> Digital clocks, event counters, frequency meters, program counters in CPUs.</li>
+    <li><strong>Ring/Johnson counters:</strong> Address decoding, LED chasers, walking‑one patterns, bus arbitration.</li>
+    <li><strong>Self‑starting counters:</strong> Any safety‑critical system (automotive, medical) where lock‑up is unacceptable.</li>
+    <li><strong>FSM (Mealy):</strong> Serial communication (UART, SPI), pattern detectors, encryption engines.</li>
+    <li><strong>FSM (Moore):</strong> Traffic light controllers, vending machines, elevator control, microwave oven timers.</li>
+    <li><strong>State reduction:</strong> Minimizing chip area in ASIC design, lower power in portable devices.</li>
+</ul>
+</div>
+
+<h2>6. Why This Matters for VLSI </h2>
+<ul>
+    <li>Synchronous counters are <strong>faster</strong> than ripple counters – essential for high‑performance CPU designs.</li>
+    <li>FSMs are the <strong>control unit</strong> of every processor – you cannot design a CPU without them.</li>
+    <li>GATE frequently asks about <strong>counter design, state diagrams, Mealy/Moore, and sequence detectors</strong>.</li>
+    <li>Ring and Johnson counters are popular interview questions for digital design roles.</li>
+</ul>
+
 
 
 
