@@ -1013,9 +1013,171 @@ S1 ──0/0──► S2 ──1/1──► (output 1) ──► S1
     <li>Ring and Johnson counters are popular interview questions for digital design roles.</li>
 </ul>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 10 – Finite State Machines & Memory</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #1e1e2a;
+        }
+        h1 {
+            color: #0066cc;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #004499;
+            margin-top: 35px;
+            border-left: 5px solid #0066cc;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #222;
+            margin-top: 25px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e6f0ff;
+            font-weight: bold;
+        }
+        .diagram {
+            background: #1e2a3e;
+            color: #d4d4d4;
+            font-family: monospace;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 10px 0 20px 20px;
+        }
+        hr {
+            margin: 40px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 10 – Finite State Machines (FSM) & Memory Basics</h1>
+    <strong>Topic:</strong> Sequential logic applications, memory, and programmable devices.</p>
 
+    <h2>1. Finite State Machines (FSM) – Mealy vs Moore</h2>
+    <p>An FSM is a sequential circuit that transitions between a finite number of states based on inputs and current state. Two classic types:</p>
+    <table>
+        <tr><th>Feature</th><th>Mealy FSM</th><th>Moore FSM</th></tr>
+        <tr><td>Output depends on</td><td>Present state + inputs</td><td>Present state only</td></tr>
+        <tr><td>Speed</td><td>Faster (output changes without clock)</td><td>Slower (output changes on clock edge)</td></tr>
+        <tr><td>Number of states</td><td>Generally fewer</td><td>Generally more</td></tr>
+        <tr><td>Example</td><td>UART receiver, sequence detector</td><td>Traffic light controller</td></tr>
+    </table>
+    <p><strong>Advantages & Disadvantages:</strong></p>
+    <ul>
+        <li><strong>Mealy:</strong> ✅ Fewer states, faster response. ❌ Output can have glitches if inputs change asynchronously.</li>
+        <li><strong>Moore:</strong> ✅ Output stable, glitch‑free. ❌ May require more states, slower.</li>
+    </ul>
 
+    <h2>2. FSM Design Examples</h2>
 
+    <h3>🚦 Traffic Light Controller (Moore)</h3>
+    <ul>
+        <li><strong>States:</strong> Red → Red‑Yellow → Green → Yellow → Red.</li>
+        <li><strong>Outputs:</strong> Control signals to red, yellow, green lamps.</li>
+        <li><strong>Timers:</strong> Counters generate delays (e.g., 30s red, 25s green, 5s yellow).</li>
+        <li><strong>Advantage:</strong> Safe, outputs change only on clock edges – no glitches.</li>
+        <li><strong>Disadvantage:</strong> More states than a Mealy equivalent (if one existed).</li>
+    </ul>
+
+    <h3>💸 Vending Machine (Mealy)</h3>
+    <ul>
+        <li><strong>Inputs:</strong> Coin (₹1, ₹2, ₹5), product select.</li>
+        <li><strong>Outputs:</strong> Dispense product, return change.</li>
+        <li><strong>States:</strong> 0, 5, 10, 15, 20 rupees.</li>
+        <li><strong>Advantage:</strong> Fewer states, immediate output on coin insertion.</li>
+        <li><strong>Disadvantage:</strong> Output can glitch if coin input changes during clock.</li>
+    </ul>
+
+    <h3>🔍 1011 Sequence Detector (Mealy)</h3>
+    <ul>
+        <li><strong>Purpose:</strong> Detect pattern "1011" in a serial bit stream (overlapping allowed).</li>
+        <li><strong>States:</strong> S0 (none), S1 (1), S2 (10), S3 (101), S4 (1011).</li>
+        <li><strong>Use:</strong> Frame detection in UART, start‑of‑packet in protocols.</li>
+        <li><strong>Advantage:</strong> Minimal states (5).</li>
+        <li><strong>Disadvantage:</strong> Timing‑sensitive; requires careful synchronisation.</li>
+    </ul>
+
+    <h2>3. Memory Basics: ROM, SRAM, DRAM</h2>
+    <table>
+        <tr><th>Type</th><th>Cell</th><th>Volatile?</th><th>Speed</th><th>Density</th><th>Use</th></tr>
+        <tr><td><strong>ROM</strong> (Mask, PROM, EPROM, EEPROM, Flash)</td><td>Floating gate transistor</td><td>No</td><td>Slow</td><td>High</td><td>Firmware, boot code</td></tr>
+        <tr><td><strong>SRAM</strong></td><td>6 transistors</td><td>Yes</td><td>Fast</td><td>Low</td><td>CPU cache</td></tr>
+        <tr><td><strong>DRAM</strong></td><td>1 capacitor + 1 transistor</td><td>Yes</td><td>Slower</td><td>High</td><td>Main memory (RAM)</td></tr>
+    </table>
+    <p><strong>Advantages & Disadvantages:</strong></p>
+    <ul>
+        <li><strong>ROM:</strong> ✅ Non‑volatile, reliable. ❌ Cannot be rewritten easily (except Flash).</li>
+        <li><strong>SRAM:</strong> ✅ Very fast, no refresh. ❌ Large cell size, higher static power.</li>
+        <li><strong>DRAM:</strong> ✅ High density, lower static power. ❌ Needs periodic refresh, slower.</li>
+    </ul>
+
+    <h2>4. State Encoding Techniques</h2>
+    <table>
+        <tr><th>Method</th><th>Flip‑Flops</th><th>Advantages</th><th>Disadvantages</th></tr>
+        <tr><td><strong>Binary</strong></td><td>log₂ N</td><td>Fewest flip‑flops</td><td>More combinational logic, slower</td></tr>
+        <tr><td><strong>Gray code</strong></td><td>log₂ N</td><td>Glitch‑free, low power</td><td>Still log₂ N FFs, not always minimal logic</td></tr>
+        <tr><td><strong>One‑hot</strong></td><td>N</td><td>Fast, simple next‑state logic</td><td>Many flip‑flops (N)</td></tr>
+    </table>
+    <p><strong>Trade‑off:</strong> One‑hot is preferred in FPGAs (lots of flip‑flops, simple routing). Binary/Gray used in ASICs (area‑constrained).</p>
+
+    <h2>5. Programmable Logic Devices (PLD, CPLD, FPGA)</h2>
+    <ul>
+        <li><strong>PLD</strong> (PROM, PLA, PAL): Small AND‑OR arrays – glue logic, simple state machines.</li>
+        <li><strong>CPLD</strong>: Multiple PLDs with programmable interconnect – medium complexity, boot logic.</li>
+        <li><strong>FPGA</strong>: Look‑up tables (LUTs), flip‑flops, routing – high complexity, reconfigurable, used in DSP, AI accelerators.</li>
+    </ul>
+    <p><strong>Advantage of FPGA:</strong> Can be reprogrammed after manufacturing, ideal for prototyping.<br>
+    <strong>Disadvantage:</strong> Higher cost, higher power consumption than fixed ASIC.</p>
+
+    <h2>6. Timing Parameters for Synchronous Design</h2>
+    <ul>
+        <li><strong>Setup time (Tsu):</strong> Data must be stable before the clock edge.</li>
+        <li><strong>Hold time (Th):</strong> Data must be stable after the clock edge.</li>
+        <li><strong>Propagation delay (Tcq):</strong> Clock edge → output change.</li>
+        <li><strong>Clock skew:</strong> Difference in clock arrival time across flip‑flops.</li>
+    </ul>
+   
+    
+    </div>
+    <p><strong>Advantage:</strong> Separating next‑state logic from state register makes the design clear and synthesizable.<br>
+    <strong>Disadvantage:</strong> Beginners often mix blocking/non‑blocking assignments incorrectly – practice needed.</p>
+
+   
+
+ 
 
 </body>
 </html>
