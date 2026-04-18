@@ -3,78 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Day 11 – Verilog Fundamentals </title>
+    <title>Day 11 – Verilog Fundamentals (15 Topics)</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #0f172a;  /* dark blue */
-            color: #e2e8f0;             /* light grey - fully readable */
+            background-color: #ffffff;
+            color: #1e2a3e;
             line-height: 1.6;
         }
         h1 {
-            color: #60a5fa;
-            border-bottom: 3px solid #60a5fa;
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
             padding-bottom: 10px;
         }
         h2 {
-            color: #facc15;
+            color: #003d80;
             margin-top: 35px;
-            border-left: 5px solid #60a5fa;
+            border-left: 5px solid #0056b3;
             padding-left: 15px;
         }
         h3 {
-            color: #facc15;
+            color: #1e4663;
             margin-top: 25px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
         }
         th, td {
-            border: 1px solid #334155;
+            border: 1px solid #dee2e6;
             padding: 10px;
             vertical-align: top;
         }
         th {
-            background-color: #2d3a4f;
-            color: #facc15;
+            background-color: #e9ecef;
+            font-weight: bold;
         }
         pre {
-            background-color: #0f172a;
-            color: #e2e8f0;
+            background-color: #f4f4f4;
+            color: #1e2a3e;
             padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
             font-family: 'Courier New', monospace;
             font-size: 14px;
-            border: 1px solid #334155;
+            border: 1px solid #ddd;
         }
         code {
             font-family: 'Courier New', monospace;
-            background: #1e293b;
+            background: #f1f1f1;
             padding: 2px 5px;
             border-radius: 4px;
-            color: #facc15;
+            color: #d14;
         }
         .diagram {
-            background: #1e293b;
+            background: #1e2a3e;      /* dark background only for diagrams */
+            color: #e2e8f0;           /* light text inside diagrams */
             border: 1px solid #334155;
             padding: 15px;
             margin: 20px 0;
             font-family: monospace;
             white-space: pre;
             overflow-x: auto;
-            color: #e2e8f0;
         }
         .note {
-            background: #2d3a4f;
-            border-left: 5px solid #60a5fa;
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
             padding: 10px 15px;
             margin: 20px 0;
         }
@@ -82,18 +82,18 @@
             margin-top: 50px;
             text-align: center;
             font-size: 0.9em;
-            color: #94a3b8;
-            border-top: 1px solid #334155;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
             padding-top: 20px;
         }
         a {
-            color: #60a5fa;
+            color: #0056b3;
         }
     </style>
 </head>
 <body>
     <h1>Day 11 – Verilog Fundamentals: 15 Essential Topics</h1>
-    <p> <strong>Topic:</strong> RTL Design with Verilog – Theory, Syntax, and Examples</p>
+    <p><strong>Topic:</strong> RTL Design with Verilog – Theory, Syntax, and Examples</p>
     <p>This page provides a complete reference for the core concepts of Verilog HDL. Each topic includes syntax, code snippets, ASCII diagrams, advantages/disadvantages, and real-world applications. Use this as a study guide before writing your own modules.</p>
 
     <h2>1. Module and Port Declaration</h2>
@@ -360,7 +360,7 @@ end</code></pre>
         <tr><td>Module</th><td>Basic unit, ports define interface</th></tr>
         <tr><td>wire/reg</th><td>wire for assign, reg for always</th></tr>
         <tr><td>assign</th><td>Continuous combinational</th></tr>
-        <tr><td>always</th><td>Sequential (`posedge`) or combinational (`@(*)`)</th></tr>
+        <tr><td>always</th><td>Sequential (<code>posedge</code>) or combinational (<code>@(*)</code>)</th></tr>
         <tr><td>= vs &lt;=</th><td>Blocking for combinational, non‑blocking for sequential</th></tr>
         <tr><td>if/case</th><td>Conditional logic</th></tr>
         <tr><td>parameter</th><td>Compile‑time constant</th></tr>
@@ -374,7 +374,186 @@ end</code></pre>
         <tr><td>FSM styles</th><td>Two always blocks recommended</th></tr>
     </table>
 
-   
+    
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 12 – Metastability & Clock Domain Crossing</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f4f4f4;
+            color: #1e2a3e;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #d14;
+        }
+        .diagram {
+            background: #1e2a3e;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        a {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 12 – Metastability & Clock Domain Crossing (CDC)</h1>
+    <p> <strong>Topic:</strong> Reliable data transfer between clock domains.</p>
+    <p>This page explains why digital systems sometimes fail randomly and how engineers prevent it – essential knowledge for any VLSI or FPGA designer.</p>
+
+    <h2>1. What is Metastability?</h2>
+    <p>A flip‑flop has two stable states: 0 and 1. If the data input changes <strong>too close</strong> to the clock edge (violating setup or hold time), the output may enter an <strong>unstable, unpredictable state</strong> – neither 0 nor 1, but an intermediate voltage that eventually settles to one of them after an unbounded delay. This is <strong>metastability</strong>.</p>
+    <div class="diagram">
+Clock   ──┐     ┌─────┐     ┌─
+        │     │     │     │
+Data    ─┘     └───┬─┘     └─ (change too close to edge)
+                   │
+Output  ───────────┴─── metastable region ──── settles to 0 or 1
+    </div>
+    <p><strong>Consequence:</strong> The downstream logic may see different values (some see 0, some see 1), causing system failure, data corruption, or crashes.</p>
+
+    <h2>2. When Does Metastability Happen?</h2>
+    <ul>
+        <li>Asynchronous inputs (e.g., button press, signal from another clock domain)</li>
+        <li>Violation of setup/hold time due to clock skew or data delay</li>
+        <li>Clock domain crossing (CDC) without proper synchronisation</li>
+    </ul>
+
+    <h2>3. Solution: Two‑Flip‑Flop Synchroniser</h2>
+    <p>A <strong>two‑flip‑flop synchroniser</strong> (back‑to‑back flip‑flops) reduces the probability of metastability to an acceptable level (e.g., &lt; 1e‑12 per year).</p>
+    <div class="diagram">
+Asynchronous input ──┬── FF1 ──┬── FF2 ── synchronised output
+                     │         │
+                 clock ────────┘
+    </div>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>First flip‑flop (FF1) samples the asynchronous input. It may become metastable.</li>
+        <li>Second flip‑flop (FF2) samples the output of FF1 after one clock cycle. By then, FF1 has almost certainly settled to a stable value.</li>
+        <li>FF2 output is safe to use in the destination clock domain.</li>
+    </ul>
+    <div class="note">⚠️ A two‑flip‑flop synchroniser does <strong>not</strong> prevent data loss. It only prevents metastable values from propagating.</div>
+
+    <h2>4. Clock Domain Crossing (CDC) – The Problem</h2>
+    <p>When data passes from one clock domain (CLK_A) to another (CLK_B) with different frequencies or phases, metastability is almost guaranteed unless proper CDC techniques are used.</p>
+    <p><strong>Common CDC scenarios:</strong></p>
+    <ul>
+        <li>Fast → slow clock (e.g., 200 MHz → 50 MHz)</li>
+        <li>Slow → fast clock (e.g., 25 MHz → 100 MHz)</li>
+        <li>Asynchronous (completely unrelated) clocks</li>
+    </ul>
+
+    <h2>5. Basic CDC Techniques</h2>
+    <table>
+        <tr><th>Technique</th><th>Use case</th><th>Advantage</th><th>Disadvantage</th></tr>
+        <tr><td>Two‑FF synchroniser</th><td>Single control signals (pulse, enable)</th><td>Simple, low latency</th><td>Cannot guarantee data loss for multi‑bit buses</th></tr>
+        <tr><td>Handshake (request/ack)</th><td>Slow control signals, multi‑bit</th><td>Reliable, lossless</th><td>High latency, more logic</th></tr>
+        <tr><td>FIFO</th><td>Multi‑bit data streams (e.g., memory, UART)</th><td>Lossless, high throughput</th><td>Larger area, complex</th></tr>
+        <tr><td>Gray code counter</th><td>Pointer crossing between domains (e.g., FIFO read/write pointers)</th><td>Glitch‑free, safe</th><td>Limited to incrementing values</th></tr>
+    </table>
+
+    <h2>6. Why CDC Matters for VLSI</h2>
+    <ul>
+        <li>Most modern SoCs have <strong>multiple clock domains</strong> (CPU @ 2GHz, bus @ 500MHz, I2C @ 100kHz, USB @ 480MHz).</li>
+        <li>Improper CDC is the #1 cause of <strong>functional bugs in silicon</strong> – respins cost millions of dollars.</li>
+        <li>GATE EC/CS may not ask deeply, but <strong>interviews for VLSI roles always ask CDC basics</strong>.</li>
+    </ul>
+
+    <h2>7. Example: Two‑FF Synchroniser Verilog Snippet (Conceptual)</h2>
+    <pre><code>reg sync_ff1, sync_ff2;
+always @(posedge clk_dest) begin
+    sync_ff1 <= async_signal;
+    sync_ff2 <= sync_ff1;
+end
+assign safe_signal = sync_ff2;</code></pre>
+    <p>The output <code>safe_signal</code> is synchronised and safe to use in the destination clock domain.</p>
+
+    <h2>Summary Table</h2>
+    <table>
+        <tr><th>Term</th><th>Meaning</th></tr>
+        <tr><td>Metastability</th><td>Unstable output when setup/hold is violated</th></tr>
+        <tr><td>Two‑FF synchroniser</th><td>Reduces metastability probability for single bits</th></tr>
+        <tr><td>CDC</th><td>Data crossing between different clock domains</th></tr>
+        <tr><td>Handshake</th><td>Request/acknowledge protocol for safe crossing</th></tr>
+        <tr><td>Gray code</th><td>Used for FIFO pointers to avoid multiple bits changing</th></tr>
+    </table>
+
+  
     </div>
 </body>
 </html>
+
+    
