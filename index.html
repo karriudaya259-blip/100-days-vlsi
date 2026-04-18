@@ -1823,7 +1823,62 @@ assign safe_signal = sync_ff2;</code></pre>
           
             
        
-  
+      <h2>8. Synchronizer Types – 2‑FF, 3‑FF, Pulse Synchronizer</h2>
+    <p>Different applications require different synchronizer structures.</p>
+    <table>
+        <tr><th>Type</th><th>Structure</th><th>Use Case</th><th>Latency</th><th>Limitation</th></tr>
+        <tr><td><strong>2‑FF synchronizer</strong></th><td>Two back‑to‑back flip‑flops</th><td>Single control signals, level signals</th><td>2 clock cycles</th><td>May miss narrow pulses</th></tr>
+        <tr><td><strong>3‑FF synchronizer</strong></th><td>Three back‑to‑back flip‑flops</th><td>High‑reliability systems (automotive, medical)</th><td>3 clock cycles</th><td>Higher latency, more area</th></tr>
+        <tr><td><strong>Pulse synchronizer</strong></th><td>Toggle flip‑flop + XOR + 2‑FF</th>九年<Pulse transfer from fast to slow clock</th><td>Variable</th><td>Requires minimum pulse width</th></tr>
+    </table>
+    <div class="note">✅ 2‑FF is sufficient for most applications. 3‑FF is used when MTBF requirements are extremely high (e.g., space, medical).</div>
+
+    <h2>9. Mean Time Between Failures (MTBF) – Why It Matters</h2>
+    <p>MTBF quantifies how often a metastable event propagates to cause system failure. The formula (simplified) is:</p>
+    <pre><code>MTBF = e^(t_metastable / τ) / (f_clk * f_data * W)</code></pre>
+    <ul>
+        <li><code>t_metastable</code> : time allowed for metastability to resolve (usually one clock cycle)</li>
+        <li><code>τ</code> : flip‑flop time constant (process‑dependent)</li>
+        <li><code>f_clk</code> : sampling clock frequency</li>
+        <li><code>f_data</code> : input data toggle frequency</li>
+        <li><code>W</code> : timing window (setup + hold)</li>
+    </ul>
+    <p><strong>Key takeaway:</strong> MTBF improves exponentially with faster flip‑flops (smaller τ) and slower clocks. A two‑FF synchroniser typically achieves MTBF > 1e‑12 years – safe for most designs.</p>
+
+    <h2>10. Gray Code for FIFO Pointers – Why Adjacent States Differ by 1 Bit</h2>
+    <p>When transferring multi‑bit pointers across clock domains (e.g., FIFO read/write pointers), multiple bits could change simultaneously, causing incorrect values if sampled during transition. <strong>Gray code</strong> solves this by ensuring only one bit changes between consecutive values.</p>
+    <div class="diagram">
+Binary:  0(000) → 1(001) → 2(010) → 3(011) → 4(100)  (multiple bits change)
+Gray:    0(000) → 1(001) → 2(011) → 3(010) → 4(110)  (only one bit changes)
+    </div>
+    <p><strong>Application:</strong> FIFO read/write pointers are stored in Gray code before crossing clock domains. After synchronisation, they are converted back to binary for address generation.</p>
+
+    <h2>11. Handshake Protocol (Request/Acknowledge) – Reliable Transfer for Multi‑Bit Data</h2>
+    <p>When data must be transferred losslessly between clock domains, a handshake is used. It works as follows:</p>
+    <ol>
+        <li><strong>Source domain</strong> asserts <code>req</code> (request) and places data on the bus.</li>
+        <li><strong>Destination domain</strong> samples <code>req</code> after synchronisation, captures the data, and asserts <code>ack</code> (acknowledge).</li>
+        <li><strong>Source domain</strong> sees synchronised <code>ack</code> and de‑asserts <code>req</code>.</li>
+        <li><strong>Destination domain</strong> sees <code>req</code> de‑asserted and de‑asserts <code>ack</code>.</li>
+    </ol>
+    <div class="diagram">
+Source clk domain                  Destination clk domain
+    req ──────────────────┬── synchroniser ──┬── captured data
+    data ─────────────────┐                 │
+                          │                 │
+    ack ──────────────────┴── synchroniser ──┘
+    </div>
+    <p><strong>Advantage:</strong> Lossless, works for any data width. <strong>Disadvantage:</strong> High latency (multiple clock cycles).</p>
+
+    <h2>12. Summary of CDC Techniques (Quick Reference)</h2>
+    <table>
+        <tr><th>Scenario</th><th>Recommended Technique</th><th>Key Point</th></tr>
+        <tr><td>Single control signal</th><td>2‑FF synchroniser</th><td>Simple, low latency</th></tr>
+        <tr><td>Narrow pulse (fast to slow)</th><td>Pulse synchroniser</th><td>Preserves pulse width</th></tr>
+        <tr><td>Multi‑bit pointer (FIFO)</th><td>Gray code + 2‑FF</th><td>Only one bit changes at a time</th></tr>
+        <tr><td>Lossless multi‑bit data</th><td>Handshake (req/ack) or FIFO</th><td>Reliable but higher latency</th></tr>
+        <tr><td>Extreme reliability (auto, medical)</th><td>3‑FF synchroniser</th><td>Higher MTBF</th></tr>
+    </table>
     
 
  
