@@ -1805,16 +1805,7 @@ end
 assign safe_signal = sync_ff2;</code></pre>
     <p>The output <code>safe_signal</code> is synchronised and safe to use in the destination clock domain.</p>
 
-    <h2>Summary Table</h2>
-    <table>
-        <tr><th>Term</th><th>Meaning</th></tr>
-        <tr><td>Metastability</th><td>Unstable output when setup/hold is violated</th></tr>
-        <tr><td>Two‑FF synchroniser</th><td>Reduces metastability probability for single bits</th></tr>
-        <tr><td>CDC</th><td>Data crossing between different clock domains</th></tr>
-        <tr><td>Handshake</th><td>Request/acknowledge protocol for safe crossing</th></tr>
-        <tr><td>Gray code</th><td>Used for FIFO pointers to avoid multiple bits changing</th></tr>
-    </table>
-
+ 
    
     </div>
 </body>
