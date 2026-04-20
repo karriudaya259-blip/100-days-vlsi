@@ -2119,7 +2119,221 @@ endmodule</code></pre>
     </div>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 14 – Advanced Verilog: Parameters, Generate, FIFO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f4f4f4;
+            color: #1e2a3e;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #d14;
+        }
+        .diagram {
+            background: #1e2a3e;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        a {
+            color: #0056b3;
+        }
+        details {
+            margin: 20px 0;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 14 – Advanced Verilog: Parameters, Generate Loops, and Synchronous FIFO</h1>
+    <p><strong>Topic:</strong> Reusable RTL design with parameters, generate, and a classic FIFO example.</p>
+    <p>After mastering basic modules (half adder to ALU), advanced constructs that make Verilog code reusable, scalable, and efficient.</p>
 
+    <h2>1. Parameterised Modules – Write Once, Use Any Width</h2>
+    <p>A <code>parameter</code> allows you to change the behaviour or bus width without rewriting the module. This is essential for building libraries.</p>
+    <p><strong>Example: 2:1 multiplexer that works for any bus width</strong></p>
+    <pre><code>module mux2_param #(parameter WIDTH = 8) (
+    input [WIDTH-1:0] a, b,
+    input sel,
+    output [WIDTH-1:0] y
+);
+    assign y = sel ? b : a;
+endmodule</code></pre>
+    <p><strong>Instantiation with different widths:</strong></p>
+    <pre><code>mux2_param #(.WIDTH(4)) mux4 (a4, b4, sel, y4);
+mux2_param #(.WIDTH(16)) mux16 (a16, b16, sel, y16);</code></pre>
+    <p><strong>Advantages:</strong> Reusable, less code, fewer errors. Synthesis tools flatten the parameter correctly.</p>
+
+    <h2>2. Generate Loops – Create Repetitive Logic Automatically</h2>
+    <p>The <code>generate</code> block with a <code>for</code> loop creates multiple instances or logic at compile time. It is perfect for regular structures like adders, decoders, or memory arrays.</p>
+    <p><strong>Example: 4‑bit ripple carry adder using <code>generate</code></strong> (assumes a <code>full_adder</code> module exists)</p>
+    <pre><code>module rca4_generate #(parameter N=4) (
+    input [N-1:0] a, b,
+    input cin,
+    output [N-1:0] sum,
+    output cout
+);
+    wire [N:0] c;
+    assign c[0] = cin;
+    generate
+        genvar i;
+        for (i = 0; i < N; i = i + 1) begin : gen_adder
+            full_adder fa (
+                .a(a[i]), .b(b[i]), .cin(c[i]),
+                .sum(sum[i]), .cout(c[i+1])
+            );
+        end
+    endgenerate
+    assign cout = c[N];
+endmodule</code></pre>
+    <ul>
+        <li><code>genvar</code> is a special variable only for generate loops.</li>
+        <li>The label <code>gen_adder</code> creates a named block (useful for hierarchy).</li>
+        <li>Loop bounds must be constant (synthesizable).</li>
+    </ul>
+
+    <h2>3. Synchronous FIFO (First‑In‑First‑Out) – A Classic Design</h2>
+    <p>A FIFO is a buffer memory with separate read and write pointers. It is used for data buffering, clock domain crossing, and pipeline elasticity.</p>
+    <p><strong>Specifications:</strong> Depth = 8, width = 8 bits.</p>
+    <ul>
+        <li>Inputs: <code>clk</code>, <code>rst</code>, <code>wr_en</code>, <code>rd_en</code>, <code>din[7:0]</code></li>
+        <li>Outputs: <code>dout[7:0]</code>, <code>full</code>, <code>empty</code></li>
+        <li>Write when <code>wr_en & !full</code> → store at <code>wr_ptr</code>, increment pointer and count.</li>
+        <li>Read when <code>rd_en & !empty</code> → output from <code>rd_ptr</code>, increment pointer, decrement count.</li>
+    </ul>
+    <pre><code>module fifo_sync #(parameter DEPTH=8, WIDTH=8) (
+    input clk, rst,
+    input wr_en, rd_en,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout,
+    output full, empty
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [$clog2(DEPTH)-1:0] wr_ptr, rd_ptr;
+    reg [$clog2(DEPTH):0] count; // extra bit for full/empty
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            wr_ptr <= 0;
+            rd_ptr <= 0;
+            count <= 0;
+        end else begin
+            if (wr_en && !full) begin
+                mem[wr_ptr] <= din;
+                wr_ptr <= wr_ptr + 1;
+                count <= count + 1;
+            end
+            if (rd_en && !empty) begin
+                dout <= mem[rd_ptr];
+                rd_ptr <= rd_ptr + 1;
+                count <= count - 1;
+            end
+        end
+    end
+
+    assign full  = (count == DEPTH);
+    assign empty = (count == 0);
+endmodule</code></pre>
+    <p><strong>Testbench idea:</strong> Write 8 bytes, read them back, verify order. The FIFO is synthesizable and widely used in industry.</p>
+
+    <h2>4. What I Pushed to GitHub Today</h2>
+    <ul>
+        <li><code>mux2_param.v</code> and <code>mux2_param_tb.v</code></li>
+        <li><code>rca4_generate.v</code> and <code>rca4_generate_tb.v</code></li>
+        <li><code>fifo_sync.v</code> and a simple testbench</li>
+        <li>This <code>day14.html</code> page</li>
+    </ul>
+
+    <h2>5. Key Takeaways</h2>
+    <ul>
+        <li><strong>Parameters</strong> make modules reusable – change width without rewriting.</li>
+        <li><strong>Generate loops</strong> automate repetitive instantiation – perfect for regular structures.</li>
+        <li><strong>Synchronous FIFO</strong> is a fundamental building block; understanding pointers and full/empty logic is essential for any digital designer.</li>
+        <li>All code follows synthesizable rules: no <code>initial</code>, no <code>#delay</code>, constant bounds.</li>
+    </ul>
+
+    
+</body>
+</html>
  
 
 </body>
