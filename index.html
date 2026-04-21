@@ -2334,6 +2334,260 @@ endmodule</code></pre>
     
 </body>
 </html>
+
+                    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 15 – 9 Advanced RTL Modules</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            color: #1e2a3e;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #d14;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        a {
+            color: #0056b3;
+        }
+        .module-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .module-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .module-card h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 15 – 9 Advanced RTL Modules</h1>
+    <p> <strong>Topic:</strong> Synthesizable Verilog designs – clock dividers, FIFO, LFSR, counters, shifters,etc.</p>
+    
+        <div class="module-card">
+            <h3>1. Clock Divider</h3>
+            <p>Generates a slower clock from a fast clock using a counter. Configurable division factor.</p>
+        </div>
+        <div class="module-card">
+            <h3>2. Edge Detector</h3>
+            <p>Detects rising, falling, or both edges of a signal. Used for interrupts and debouncing.</p>
+        </div>
+        <div class="module-card">
+            <h3>3. Parameterized FIFO</h3>
+            <p>Synchronous FIFO with configurable depth and width. Includes almost_full/almost_empty flags.</p>
+        </div>
+        <div class="module-card">
+            <h3>4. Reset Synchronizer</h3>
+            <p>Asynchronous reset with synchronous release – prevents metastability.</p>
+        </div>
+        <div class="module-card">
+            <h3>5. Gray Code Counter</h3>
+            <p>Counts in Gray code (only one bit changes per step). Used for FIFO pointers across clock domains.</p>
+        </div>
+        <div class="module-card">
+            <h3>6. LFSR (4‑bit)</h3>
+            <p>Linear Feedback Shift Register – pseudo‑random sequence generator for BIST and scrambling.</p>
+        </div>
+        <div class="module-card">
+            <h3>7. BCD Counter</h3>
+            <p>Counts 0 to 9 per digit, generates carry output. Used in digital clocks and frequency counters.</p>
+        </div>
+        <div class="module-card">
+            <h3>8. Johnson Counter</h3>
+            <p>Twisted ring counter with 2N states. Simple sequence generator.</p>
+        </div>
+        <div class="module-card">
+            <h3>9. Barrel Shifter</h3>
+            <p>Rotates or shifts a bus by any amount in one cycle. Essential for ALUs and DSP.</p>
+        </div>
+    </div>
+
+    <h2>Code Snippets</h2>
+
+    <h3>Clock Divider (divide by N)</h3>
+    <pre><code>module clk_div #(parameter DIV = 2) (
+    input clk, rst,
+    output reg clk_out
+);
+    reg [$clog2(DIV)-1:0] count;
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin count <= 0; clk_out <= 0; end
+        else if (count == (DIV/2)-1) begin
+            count <= 0;
+            clk_out <= ~clk_out;
+        end else count <= count + 1;
+    end
+endmodule</code></pre>
+
+    <h3>Edge Detector</h3>
+    <pre><code>module edge_detector (
+    input clk, rst, sig,
+    output reg rise, fall, both
+);
+    reg sig_d;
+    always @(posedge clk or posedge rst) begin
+        if (rst) sig_d <= 0;
+        else sig_d <= sig;
+    end
+    always @(*) begin
+        rise = sig & ~sig_d;
+        fall = ~sig & sig_d;
+        both = rise | fall;
+    end
+endmodule</code></pre>
+
+    <h3>Parameterized FIFO</h3>
+    <pre><code>module fifo_param #(parameter DEPTH=8, WIDTH=8) (
+    input clk, rst,
+    input wr_en, rd_en,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout,
+    output full, empty, almost_full, almost_empty
+);
+    localparam PTR_WIDTH = $clog2(DEPTH);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [PTR_WIDTH-1:0] wr_ptr, rd_ptr;
+    reg [PTR_WIDTH:0] count;
+    // ... (full code in GitHub)
+    assign full = (count == DEPTH);
+    assign empty = (count == 0);
+    assign almost_full = (count >= DEPTH-1);
+    assign almost_empty = (count <= 1);
+endmodule</code></pre>
+
+    <h3>Reset Synchronizer</h3>
+    <pre><code>module reset_sync (
+    input clk, async_rst,
+    output reg sync_rst
+);
+    reg rst_meta;
+    always @(posedge clk or posedge async_rst) begin
+        if (async_rst) {rst_meta, sync_rst} <= 2'b11;
+        else {rst_meta, sync_rst} <= {1'b0, rst_meta};
+    end
+endmodule</code></pre>
+
+    <h3>Gray Code Counter</h3>
+    <pre><code>module gray_counter #(WIDTH=4) (
+    input clk, rst, en,
+    output reg [WIDTH-1:0] gray
+);
+    reg [WIDTH-1:0] bin;
+    always @(posedge clk or posedge rst) begin
+        if (rst) bin <= 0;
+        else if (en) bin <= bin + 1;
+    end
+    always @(*) gray = bin ^ (bin >> 1);
+endmodule</code></pre>
+
+    <h3>4‑bit LFSR (x⁴ + x³ + 1)</h3>
+    <pre><code>module lfsr4 (
+    input clk, rst, en,
+    output reg [3:0] lfsr
+);
+    wire feedback = lfsr[3] ^ lfsr[2];
+    always @(posedge clk or posedge rst) begin
+        if (rst) lfsr <= 4'b0001;
+        else if (en) lfsr <= {lfsr[2:0], feedback};
+    end
+endmodule</code></pre>
+
+    <h3>BCD Counter</h3>
+    <pre><code>module bcd_counter (
+    input clk, rst, en,
+    output reg [3:0] count,
+    output reg carry
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst) count <= 0;
+        else if (en) begin
+            if (count == 9) count <= 0;
+            else count <= count + 1;
+        end
+    end
+    assign carry = (en && count == 9);
+endmodule</code></pre>
+
+    <h3>Johnson Counter (4‑bit)</h3>
+    <pre><code>module johnson4 (
+    input clk, rst,
+    output reg [3:0] q
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst) q <= 4'b0000;
+        else q <= {~q[0], q[3:1]};
+    end
+endmodule</code></pre>
+
+    <h3>Barrel Shifter (rotate left)</h3>
+    <pre><code>module barrel_shifter #(WIDTH=8) (
+    input [WIDTH-1:0] in,
+    input [2:0] amt,
+    output [WIDTH-1:0] out
+);
+    assign out = {in, in} >> (WIDTH - amt);
+endmodule</code></pre>
+
+    
+</body>
+</html>
  
 
 </body>
