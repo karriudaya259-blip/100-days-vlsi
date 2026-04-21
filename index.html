@@ -2340,7 +2340,7 @@ endmodule</code></pre>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Day 15 – 9 Advanced RTL Modules</title>
+    <title>Day 15 –  Advanced RTL Modules</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -2501,274 +2501,194 @@ endmodule</code></pre>
     </style>
 </head>
 <body>
-    <h1>Day 15 – Advanced RTL Modules (9 Topics)</h1>
-    <p> <strong>Subject:</strong> Synthesizable Verilog designs for real-world applications.</p>
-    <p>This page contains <strong>complete, self-contained notes</strong> on nine essential RTL modules. Each section includes purpose, detailed explanation, full Verilog code, testbench outline, key synthesis rules, and practical applications.</p>
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 15 – 9 Advanced RTL Modules</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            background: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: #d14;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        a {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 15 –  Advanced RTL Modules (Synthesizable Verilog)</h1>
+    <p><strong>Topic:</strong> Practical modules for real designs.</p>
 
-    <!-- ================= MODULE 1 ================= -->
-    <div class="module-block">
-        <h2>1. Clock Divider (Divide by N)</h2>
-        <p><strong>Purpose:</strong> Generate a slower clock from a high-frequency source. Used for baud rate generation, PWM, timers, and enabling slower logic blocks.</p>
-        <p><strong>How it works:</strong> A counter counts clock cycles. When it reaches half the division factor, the output toggles. For even division (e.g., divide by 4), the output is high for 2 cycles, low for 2 cycles. For odd division, more complex logic is needed (not covered here).</p>
-        <h3>Verilog Code (synthesizable)</h3>
-        <pre><code>module clk_div #(parameter DIV = 2) (
+    <h2>1. Clock Divider (even division)</h2>
+    <pre><code>module clk_div #(parameter DIV = 2) (
     input clk, rst,
     output reg clk_out
 );
-    // DIV must be even and >=2. For odd division, use a different approach.
-    localparam MAX = DIV / 2;
+    localparam MAX = DIV/2;
     reg [$clog2(MAX)-1:0] count;
-
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            count <= 0;
-            clk_out <= 0;
-        end else begin
-            if (count == MAX - 1) begin
-                count <= 0;
-                clk_out <= ~clk_out;
-            end else begin
-                count <= count + 1;
-            end
-        end
+        if (rst) begin count <= 0; clk_out <= 0; end
+        else if (count == MAX-1) begin count <= 0; clk_out <= ~clk_out; end
+        else count <= count + 1;
     end
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Apply clock and reset. Observe that <code>clk_out</code> toggles at half the frequency. For DIV=4, one period of clk_out = 8 clk cycles.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Uses <code>$clog2</code> to compute counter width automatically.</li>
-            <li>Only works for even division factors. For odd factors, you need a different pattern (e.g., hold high for (N+1)/2, low for (N-1)/2).</li>
-            <li>Large division factors require large counters – watch area.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Generating 1 Hz from 50 MHz, UART baud clocks, PWM signals.</p>
-    </div>
+    <p><strong>Use:</strong> Generate slower clocks (e.g., 1 Hz from 50 MHz). Only even division.</p>
 
-    <!-- ================= MODULE 2 ================= -->
-    <div class="module-block">
-        <h2>2. Edge Detector</h2>
-        <p><strong>Purpose:</strong> Detect rising, falling, or both edges of an asynchronous or synchronous signal. Produces a single‑cycle pulse.</p>
-        <p><strong>How it works:</strong> The input signal is delayed by one clock cycle. A rising edge is detected when the current value is 1 and the delayed value is 0. Falling edge is the opposite.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module edge_detector (
-    input clk, rst,
-    input sig,
+    <h2>2. Edge Detector</h2>
+    <pre><code>module edge_detector (
+    input clk, rst, sig,
     output reg rise, fall, both
 );
     reg sig_d;
-
     always @(posedge clk or posedge rst) begin
-        if (rst) sig_d <= 1'b0;
+        if (rst) sig_d <= 0;
         else sig_d <= sig;
     end
-
     always @(*) begin
         rise = sig & ~sig_d;
         fall = ~sig & sig_d;
         both = rise | fall;
     end
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Apply a slow toggling signal (e.g., change every 20 ns) and observe that <code>rise</code> and <code>fall</code> are single clock‑cycle pulses.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>The delay flip‑flop makes the circuit edge‑sensitive to the clock.</li>
-            <li>Works for signals that are stable around the clock edge – if the input changes asynchronously, metastability can occur; add a synchroniser first.</li>
-            <li>Used for interrupts, start‑of‑packet detection, button press detection (with debouncing).</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Interrupt controllers, SPI chip select detection, timer start/stop triggers.</p>
-    </div>
+    <p><strong>Use:</strong> Interrupts, start‑of‑packet detection, button triggers (with debouncing).</p>
 
-    <!-- ================= MODULE 3 ================= -->
-    <div class="module-block">
-        <h2>3. Parameterized Synchronous FIFO</h2>
-        <p><strong>Purpose:</strong> A first‑in‑first‑out buffer with configurable depth and width. Provides <code>full</code>, <code>empty</code>, <code>almost_full</code>, <code>almost_empty</code> flags.</p>
-        <p><strong>How it works:</strong> Uses a memory array, write pointer, read pointer, and a count register. Writes increment count and pointer; reads decrement count and increment read pointer. Full when count equals depth; empty when count = 0.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module fifo_param #(
-    parameter DEPTH = 8,
-    parameter WIDTH = 8
-) (
+    <h2>3. Parameterized Synchronous FIFO</h2>
+    <pre><code>module fifo_param #(parameter DEPTH=8, WIDTH=8) (
     input clk, rst,
     input wr_en, rd_en,
     input [WIDTH-1:0] din,
     output reg [WIDTH-1:0] dout,
-    output full, empty,
-    output almost_full, almost_empty
+    output full, empty, almost_full, almost_empty
 );
     localparam PTR_WIDTH = $clog2(DEPTH);
     reg [WIDTH-1:0] mem [0:DEPTH-1];
     reg [PTR_WIDTH-1:0] wr_ptr, rd_ptr;
-    reg [PTR_WIDTH:0] count;  // extra bit to detect full/empty
-
+    reg [PTR_WIDTH:0] count;
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            wr_ptr <= 0;
-            rd_ptr <= 0;
-            count <= 0;
-        end else begin
-            // Write operation
-            if (wr_en && !full) begin
-                mem[wr_ptr] <= din;
-                wr_ptr <= wr_ptr + 1;
-                count <= count + 1;
-            end
-            // Read operation
-            if (rd_en && !empty) begin
-                dout <= mem[rd_ptr];
-                rd_ptr <= rd_ptr + 1;
-                count <= count - 1;
-            end
+        if (rst) begin wr_ptr <= 0; rd_ptr <= 0; count <= 0; end
+        else begin
+            if (wr_en && !full) begin mem[wr_ptr] <= din; wr_ptr <= wr_ptr + 1; count <= count + 1; end
+            if (rd_en && !empty) begin dout <= mem[rd_ptr]; rd_ptr <= rd_ptr + 1; count <= count - 1; end
         end
     end
-
     assign full = (count == DEPTH);
     assign empty = (count == 0);
-    assign almost_full = (count >= DEPTH - 1);
+    assign almost_full = (count >= DEPTH-1);
     assign almost_empty = (count <= 1);
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Write 8 bytes, then read them back. Check that data order is preserved and flags change correctly. Also test overflow and underflow protection.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Count register eliminates the need for separate full/empty logic using pointers.</li>
-            <li><code>almost_full</code> and <code>almost_empty</code> are useful for back‑pressure and burst transfers.</li>
-            <li>Synchronous FIFO – all operations on same clock domain. For asynchronous FIFO, you need Gray code pointers.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Data buffering between processing stages, packet storage in network switches, elastic buffers.</p>
-    </div>
+    <p><strong>Use:</strong> Data buffering, clock domain crossing (asynchronous version later).</p>
 
-    <!-- ================= MODULE 4 ================= -->
-    <div class="module-block">
-        <h2>4. Reset Synchronizer</h2>
-        <p><strong>Purpose:</strong> Convert an asynchronous reset into a signal that is synchronously released (de‑asserted) to avoid metastability.</p>
-        <p><strong>How it works:</strong> Two flip‑flops in series. The asynchronous reset forces both flip‑flops to 1 immediately. When reset is released, the first flip‑flop samples 0 on the next clock, then the second flip‑flop samples 0 on the following clock, producing a clean synchronised reset.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module reset_sync (
+    <h2>4. Reset Synchronizer</h2>
+    <pre><code>module reset_sync (
     input clk, async_rst,
     output reg sync_rst
 );
     reg rst_meta;
     always @(posedge clk or posedge async_rst) begin
-        if (async_rst) begin
-            rst_meta <= 1'b1;
-            sync_rst <= 1'b1;
-        end else begin
-            rst_meta <= 1'b0;
-            sync_rst <= rst_meta;
-        end
+        if (async_rst) {rst_meta, sync_rst} <= 2'b11;
+        else {rst_meta, sync_rst} <= {1'b0, rst_meta};
     end
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Assert and release async_rst asynchronously. Observe that sync_rst de‑asserts only on the second clock edge after release.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Reset is asserted asynchronously (immediate). De‑assertion is synchronous (two clock cycles).</li>
-            <li>Two‑stage synchroniser is sufficient for most designs. For high‑reliability, three stages may be used.</li>
-            <li>Place the synchronised reset on all flip‑flops in your design.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Every multi‑clock design that uses asynchronous reset.</p>
-    </div>
+    <p><strong>Use:</strong> Safe release of asynchronous reset (avoids metastability).</p>
 
-    <!-- ================= MODULE 5 ================= -->
-    <div class="module-block">
-        <h2>5. Gray Code Counter</h2>
-        <p><strong>Purpose:</strong> Count in Gray code where only one bit changes between consecutive values. Used to transfer counters between clock domains (e.g., FIFO pointers).</p>
-        <p><strong>How it works:</strong> Binary counter increments normally; then binary is converted to Gray using <code>binary ^ (binary >> 1)</code>.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module gray_counter #(parameter WIDTH = 4) (
+    <h2>5. Gray Code Counter</h2>
+    <pre><code>module gray_counter #(WIDTH=4) (
     input clk, rst, en,
     output reg [WIDTH-1:0] gray
 );
     reg [WIDTH-1:0] bin;
-
     always @(posedge clk or posedge rst) begin
         if (rst) bin <= 0;
         else if (en) bin <= bin + 1;
     end
-
     always @(*) gray = bin ^ (bin >> 1);
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Enable counter and observe Gray output. Verify that consecutive values differ by exactly one bit.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Gray code is not binary – the value is not the count but a code.</li>
-            <li>Conversion back to binary requires a separate circuit (for pointer comparison).</li>
-            <li>Widely used in asynchronous FIFO read/write pointers.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Asynchronous FIFO, rotary encoders, state encoding for glitch‑free transitions.</p>
-    </div>
+    <p><strong>Use:</strong> Asynchronous FIFO pointers, rotary encoders.</p>
 
-    <!-- ================= MODULE 6 ================= -->
-    <div class="module-block">
-        <h2>6. LFSR (4‑bit, polynomial x⁴ + x³ + 1)</h2>
-        <p><strong>Purpose:</strong> Generate a pseudo‑random sequence using a linear feedback shift register. Used for built‑in self‑test (BIST), scrambling, and fast counters.</p>
-        <p><strong>How it works:</strong> The register shifts left, and the new bit is the XOR of selected taps (bits 4 and 3). The sequence repeats every 2ⁿ‑1 cycles (maximal length).</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module lfsr4 (
+    <h2>6. LFSR (4‑bit, polynomial x⁴ + x³ + 1)</h2>
+    <pre><code>module lfsr4 (
     input clk, rst, en,
     output reg [3:0] lfsr
 );
-    wire feedback = lfsr[3] ^ lfsr[2];   // taps at positions 4 and 3 (1‑indexed)
-
+    wire feedback = lfsr[3] ^ lfsr[2];
     always @(posedge clk or posedge rst) begin
-        if (rst) lfsr <= 4'b0001;   // non‑zero seed
+        if (rst) lfsr <= 4'b0001;
         else if (en) lfsr <= {lfsr[2:0], feedback};
     end
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Enable and observe the sequence. It should cycle through 15 distinct values before repeating. The all‑zero state is not allowed.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Seed must be non‑zero. All‑zero state is a lock‑up state.</li>
-            <li>Polynomial must be primitive for maximal length.</li>
-            <li>Used in CRC, BIST, and random number generation.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Built‑in self‑test for memories, Ethernet CRC, spread‑spectrum clocks.</p>
-    </div>
+    <p><strong>Use:</strong> Pseudo‑random generation, BIST, scrambling.</p>
 
-    <!-- ================= MODULE 7 ================= -->
-    <div class="module-block">
-        <h2>7. BCD Counter (0–9)</h2>
-        <p><strong>Purpose:</strong> Count in binary‑coded decimal (each digit 0–9). Used in digital clocks, frequency counters, and decimal displays.</p>
-        <p><strong>How it works:</strong> Counts normally until 9, then resets to 0 and asserts a carry output to the next digit.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module bcd_counter (
+    <h2>7. BCD Counter (0–9)</h2>
+    <pre><code>module bcd_counter (
     input clk, rst, en,
     output reg [3:0] count,
     output reg carry
 );
     always @(posedge clk or posedge rst) begin
-        if (rst) count <= 4'b0000;
+        if (rst) count <= 0;
         else if (en) begin
-            if (count == 4'b1001)  // 9
-                count <= 4'b0000;
-            else
-                count <= count + 1;
+            if (count == 9) count <= 0;
+            else count <= count + 1;
         end
     end
-
-    assign carry = (en && count == 4'b1001);
+    assign carry = (en && count == 9);
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Enable counter and verify it counts 0..9, then wraps to 0. Check that carry is high only at the wrap point.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Multiple BCD counters can be cascaded to form multi‑digit decimal counters.</li>
-            <li>Carry output is synchronous (changes on clock edge).</li>
-            <li>Used in seven‑segment display drivers.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Digital stopwatch, frequency counter, mechanical counter replacement.</p>
-    </div>
+    <p><strong>Use:</strong> Digital clocks, seven‑segment displays, frequency counters.</p>
 
-    <!-- ================= MODULE 8 ================= -->
-    <div class="module-block">
-        <h2>8. Johnson Counter (4‑bit)</h2>
-        <p><strong>Purpose:</strong> A twisted ring counter that produces 2N states. Used for sequence generators and decoders.</p>
-        <p><strong>How it works:</strong> The complement of the last bit is fed back to the first. Starting from all zeros, it shifts in ones until all ones, then shifts in zeros.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module johnson4 (
+    <h2>8. Johnson Counter (4‑bit)</h2>
+    <pre><code>module johnson4 (
     input clk, rst,
     output reg [3:0] q
 );
@@ -2777,45 +2697,24 @@ endmodule</code></pre>
         else q <= {~q[0], q[3:1]};
     end
 endmodule</code></pre>
-        <h3>Testbench Concept</h3>
-        <p>Observe the sequence: 0000, 1000, 1100, 1110, 1111, 0111, 0011, 0001, then back to 0000. Each state has exactly one transition edge.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Only 2N states out of 2ⁿ possible states – unused states must be avoided (non‑self‑starting).</li>
-            <li>Can be made self‑starting by adding logic to force unused states into the sequence.</li>
-            <li>Used as a divide‑by‑2N counter or as a timing generator.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> Address decoders, LED chasers, phase generators.</p>
-    </div>
+    <p><strong>Use:</strong> Sequence generators, address decoders, LED chasers.</p>
 
-    <!-- ================= MODULE 9 ================= -->
-    <div class="module-block">
-        <h2>9. Barrel Shifter (rotate left)</h2>
-        <p><strong>Purpose:</strong> Shift or rotate a bus by any number of positions in a single clock cycle. Essential for ALU shift/rotate operations and DSP.</p>
-        <p><strong>How it works:</strong> Concatenate the input with itself, then select the appropriate window using the shift amount.</p>
-        <h3>Verilog Code</h3>
-        <pre><code>module barrel_shifter #(parameter WIDTH = 8) (
+    <h2>9. Barrel Shifter (rotate left)</h2>
+    <pre><code>module barrel_shifter #(WIDTH=8) (
     input [WIDTH-1:0] in,
-    input [2:0] amt,      // shift amount: 0 to WIDTH-1
+    input [2:0] amt,
     output [WIDTH-1:0] out
 );
-    // rotate left: out = {in, in} >> (WIDTH - amt)
     assign out = {in, in} >> (WIDTH - amt);
 endmodule</code></pre>
-        <p>For logical shift right (zero fill), you can use <code>out = in >> amt</code>. For arithmetic shift, sign extension is needed.</p>
-        <h3>Testbench Concept</h3>
-        <p>Apply a known pattern (e.g., 8'b10110010) and shift by 0,1,2,... Verify output matches expected rotation.</p>
-        <h3>Key Points</h3>
-        <ul>
-            <li>Combinational – no clock. Large shifters can have many gates; pipelining may be needed for high speed.</li>
-            <li>Rotate vs shift: rotate wraps around, shift discards bits.</li>
-            <li>Width parameter makes it reusable.</li>
-        </ul>
-        <p><strong>Real-world use:</strong> ALU in CPU, CRC calculation, bit‑reordering in DSP.</p>
-    </div>
+    <p><strong>Use:</strong> ALU shift/rotate operations, DSP bit‑reordering.</p>
 
- 
+    
+
    
+    </div>
+</body>
+</html>
     </div>
 </body>
 </html>
