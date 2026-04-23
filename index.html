@@ -2721,6 +2721,200 @@ endmodule</code></pre>
 </body>
 </html>
  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 17 – FIFO, Memory, and CDC (10 Topics)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1200px; margin: 40px auto; padding: 20px; background: #ffffff; color: #1e2a3e; line-height: 1.6; }
+        h1 { color: #0056b3; border-bottom: 3px solid #0056b3; padding-bottom: 10px; }
+        h2 { color: #003d80; margin-top: 35px; border-left: 5px solid #0056b3; padding-left: 15px; }
+        h3 { color: #1e4663; margin-top: 25px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 14px; }
+        .real { background: #e7f3ff; padding: 8px 12px; border-radius: 6px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
+        th { background: #e9ecef; }
+        .footer { margin-top: 50px; text-align: center; font-size: 0.9em; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Day 17 – FIFO Variants, Memory Blocks & Clock Domain Crossing</h1>
+    <p> <strong>10 synthesizable Verilog designs</strong></p>
 
+    <!-- List of 10 topics -->
+    <h2>📋 10 Topics Covered</h2>
+    <ul>
+        <li>Synchronous FIFO (parameterized)</li>
+        <li>Asynchronous FIFO (Gray‑coded pointers)</li>
+        <li>Dual‑Port RAM</li>
+        <li>Single‑Port RAM</li>
+        <li>Register File (8x8)</li>
+        <li>ROM using case</li>
+        <li>Stack (LIFO)</li>
+        <li>Content Addressable Memory (CAM) – conceptual</li>
+        <li>Gray Code Counter</li>
+        <li>Clock Domain Crossing Synchronizer (2‑FF)</li>
+    </ul>
+
+    <!-- Topic 1 -->
+    <h2>1. Synchronous FIFO (Parameterized)</h2>
+    <pre><code>module fifo_sync #(parameter DEPTH=8, WIDTH=8) (
+    input clk, rst,
+    input wr_en, rd_en,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout,
+    output full, empty, almost_full, almost_empty
+);
+    localparam PTR_WIDTH = $clog2(DEPTH);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [PTR_WIDTH-1:0] wr_ptr, rd_ptr;
+    reg [PTR_WIDTH:0] count;
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin wr_ptr <= 0; rd_ptr <= 0; count <= 0; end
+        else begin
+            if (wr_en && !full) begin mem[wr_ptr] <= din; wr_ptr <= wr_ptr + 1; count <= count + 1; end
+            if (rd_en && !empty) begin dout <= mem[rd_ptr]; rd_ptr <= rd_ptr + 1; count <= count - 1; end
+        end
+    end
+    assign full = (count == DEPTH);
+    assign empty = (count == 0);
+    assign almost_full = (count >= DEPTH-1);
+    assign almost_empty = (count <= 1);
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Data buffering, network packet storage, elastic buffers.</div>
+
+    <!-- Topic 2 -->
+    <h2>2. Asynchronous FIFO (Gray‑coded pointers)</h2>
+    <p><em>Full implementation omitted for brevity – requires Gray code counters and synchronisers. Concept: write and read pointers converted to Gray code before crossing clock domains.</em></p>
+    <div class="real">🌍 Real‑world use: USB controllers, multi‑clock systems.</div>
+
+    <!-- Topic 3 -->
+    <h2>3. Dual‑Port RAM</h2>
+    <pre><code>module dual_port_ram #(DEPTH=8, WIDTH=8) (
+    input clk,
+    input we_a, we_b,
+    input [WIDTH-1:0] din_a, din_b,
+    input [($clog2(DEPTH))-1:0] addr_a, addr_b,
+    output reg [WIDTH-1:0] dout_a, dout_b
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    always @(posedge clk) begin
+        if (we_a) mem[addr_a] <= din_a;
+        dout_a <= mem[addr_a];
+        if (we_b) mem[addr_b] <= din_b;
+        dout_b <= mem[addr_b];
+    end
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Register files, video frame buffers.</div>
+
+    <!-- Topic 4 -->
+    <h2>4. Single‑Port RAM</h2>
+    <pre><code>module single_port_ram #(DEPTH=8, WIDTH=8) (
+    input clk, we,
+    input [WIDTH-1:0] din,
+    input [($clog2(DEPTH))-1:0] addr,
+    output reg [WIDTH-1:0] dout
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    always @(posedge clk) begin
+        if (we) mem[addr] <= din;
+        dout <= mem[addr];
+    end
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Microcontroller scratchpad memory.</div>
+
+    <!-- Topic 5 -->
+    <h2>5. Register File (8x8)</h2>
+    <pre><code>module reg_file_8x8 (
+    input clk, we,
+    input [2:0] raddr_a, raddr_b, waddr,
+    input [7:0] din,
+    output [7:0] dout_a, dout_b
+);
+    reg [7:0] regs [0:7];
+    always @(posedge clk) if (we) regs[waddr] <= din;
+    assign dout_a = regs[raddr_a];
+    assign dout_b = regs[raddr_b];
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: RISC CPU register bank.</div>
+
+    <!-- Topic 6 -->
+    <h2>6. ROM using case</h2>
+    <pre><code>module rom_case #(ADDR_WIDTH=3, DATA_WIDTH=8) (
+    input [ADDR_WIDTH-1:0] addr,
+    output reg [DATA_WIDTH-1:0] data
+);
+    always @(*) begin
+        case (addr)
+            3'b000: data = 8'hA5;
+            3'b001: data = 8'h5A;
+            default: data = 8'h00;
+        endcase
+    end
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Boot ROM, lookup tables.</div>
+
+    <!-- Topic 7 -->
+    <h2>7. Stack (LIFO)</h2>
+    <pre><code>module stack #(DEPTH=8, WIDTH=8) (
+    input clk, rst,
+    input push, pop,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout,
+    output full, empty
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [2:0] ptr;
+    always @(posedge clk or posedge rst) begin
+        if (rst) ptr <= 0;
+        else if (push && !full) begin mem[ptr] <= din; ptr <= ptr + 1; end
+        else if (pop && !empty) begin ptr <= ptr - 1; dout <= mem[ptr-1]; end
+    end
+    assign full = (ptr == DEPTH);
+    assign empty = (ptr == 0);
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: CPU call stack.</div>
+
+    <!-- Topic 8 -->
+    <h2>8. Content Addressable Memory (CAM) – Conceptual</h2>
+    <p>Search by data, returns address. Used in cache tags and TLBs.</p>
+    <div class="real">🌍 Real‑world use: TLB in processors, cache tag memory.</div>
+
+    <!-- Topic 9 -->
+    <h2>9. Gray Code Counter</h2>
+    <pre><code>module gray_counter #(WIDTH=4) (
+    input clk, rst, en,
+    output reg [WIDTH-1:0] gray
+);
+    reg [WIDTH-1:0] bin;
+    always @(posedge clk or posedge rst) begin
+        if (rst) bin <= 0;
+        else if (en) bin <= bin + 1;
+    end
+    always @(*) gray = bin ^ (bin >> 1);
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Asynchronous FIFO pointers, rotary encoders.</div>
+
+    <!-- Topic 10 -->
+    <h2>10. Clock Domain Crossing (CDC) Synchronizer (2‑FF)</h2>
+    <pre><code>module cdc_sync (
+    input clk_dest, rst,
+    input async_signal,
+    output reg sync_signal
+);
+    reg meta;
+    always @(posedge clk_dest or posedge rst) begin
+        if (rst) {meta, sync_signal} <= 2'b00;
+        else {meta, sync_signal} <= {async_signal, meta};
+    end
+endmodule</code></pre>
+    <div class="real">🌍 Real‑world use: Reset synchronisation, interrupt crossing.</div>
+
+   
+</body>
+</html>
 </body>
 </html>
