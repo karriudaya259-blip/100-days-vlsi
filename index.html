@@ -2913,8 +2913,461 @@ endmodule</code></pre>
 endmodule</code></pre>
     <div class="real">🌍 Real‑world use: Reset synchronisation, interrupt crossing.</div>
 
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 18 – Advanced RTL Theory: Async FIFO, Memory, LFSR, Pipeline</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 { color: #0056b3; border-bottom: 3px solid #0056b3; padding-bottom: 10px; }
+        h2 { color: #003d80; margin-top: 35px; border-left: 5px solid #0056b3; padding-left: 15px; }
+        h3 { color: #1e4663; margin-top: 25px; }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+        th { background: #e9ecef; }
+        .diagram {
+            background: #f8f9fa;
+            font-family: monospace;
+            white-space: pre;
+            padding: 15px;
+            border-left: 4px solid #0056b3;
+            margin: 20px 0;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 18 – Advanced RTL Theory: Asynchronous FIFO, Memory, LFSR, Pipeline</h1>
+    <p><strong>Complete reference – concepts, equations, and real‑world use.</strong></p>
+
+    <h2>1. Asynchronous FIFO (Gray‑Coded Pointers)</h2>
+    <p>Used to transfer data between <strong>different clock domains</strong>. The write and read clocks are independent. Pointers are converted to Gray code to avoid metastability.</p>
+    <ul>
+        <li><strong>Gray code property:</strong> only one bit changes between consecutive values → safe for cross‑domain synchronisation.</li>
+        <li><strong>Full flag:</strong> compare write pointer (Gray) with synchronized read pointer (Gray) – also check that the most significant bits differ but the rest match.</li>
+        <li><strong>Empty flag:</strong> compare read pointer (Gray) with synchronized write pointer (Gray).</li>
+        <li><strong>Memory array:</strong> dual‑port RAM (write on wclk, read on rclk).</li>
+    </ul>
+    <div class="diagram">
+Write clock domain                 Read clock domain
+    wclk                              rclk
+     │                                 │
+  ┌──▼──┐                           ┌──▼──┐
+  │ wptr├─── Gray ──┬─ sync ──┬──→│ rptr│
+  └─────┘           │         │    └─────┘
+     │              │         │       │
+  write to mem      │         │   read from mem
+     │              │         │       │
+     └──────────────┼─────────┘       │
+                    │                 │
+               compare for full      compare for empty
+    </div>
+    <p><strong>Real‑world use:</strong> Multi‑clock systems (USB, PCIe, Ethernet MACs), data bridges between processor and peripheral.</p>
+
+    <h2>2. Dual‑Port RAM</h2>
+    <p>Two independent read/write ports. Can perform simultaneous access to different addresses.</p>
+    <pre><code>module dual_port_ram #(DEPTH=8, WIDTH=8) (
+    input clk,
+    input we_a, we_b,
+    input [WIDTH-1:0] din_a, din_b,
+    input [($clog2(DEPTH))-1:0] addr_a, addr_b,
+    output reg [WIDTH-1:0] dout_a, dout_b
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    always @(posedge clk) begin
+        if (we_a) mem[addr_a] <= din_a;
+        dout_a <= mem[addr_a];
+        if (we_b) mem[addr_b] <= din_b;
+        dout_b <= mem[addr_b];
+    end
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> Register files, video frame buffers, CPU cache tag RAM.</p>
+
+    <h2>3. Single‑Port RAM</h2>
+    <pre><code>module single_port_ram #(DEPTH=8, WIDTH=8) (
+    input clk, we,
+    input [WIDTH-1:0] din,
+    input [($clog2(DEPTH))-1:0] addr,
+    output reg [WIDTH-1:0] dout
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    always @(posedge clk) begin
+        if (we) mem[addr] <= din;
+        dout <= mem[addr];
+    end
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> Microcontroller scratchpad, simple buffer memory.</p>
+
+    <h2>4. Register File (8x8)</h2>
+    <pre><code>module reg_file_8x8 (
+    input clk, we,
+    input [2:0] raddr_a, raddr_b, waddr,
+    input [7:0] din,
+    output [7:0] dout_a, dout_b
+);
+    reg [7:0] regs [0:7];
+    always @(posedge clk) if (we) regs[waddr] <= din;
+    assign dout_a = regs[raddr_a];
+    assign dout_b = regs[raddr_b];
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> General‑purpose register bank in RISC processors (ARM, RISC‑V).</p>
+
+    <h2>5. ROM using <code>case</code></h2>
+    <pre><code>module rom_case #(ADDR_WIDTH=3, DATA_WIDTH=8) (
+    input [ADDR_WIDTH-1:0] addr,
+    output reg [DATA_WIDTH-1:0] data
+);
+    always @(*) begin
+        case (addr)
+            3'b000: data = 8'hA5;
+            3'b001: data = 8'h5A;
+            3'b010: data = 8'hFF;
+            default: data = 8'h00;
+        endcase
+    end
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> Boot ROM, sine/cosine lookup tables, constant data.</p>
+
+    <h2>6. Stack (LIFO)</h2>
+    <pre><code>module stack #(DEPTH=8, WIDTH=8) (
+    input clk, rst,
+    input push, pop,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout,
+    output full, empty
+);
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [2:0] ptr;
+    always @(posedge clk or posedge rst) begin
+        if (rst) ptr <= 0;
+        else if (push && !full) begin mem[ptr] <= din; ptr <= ptr + 1; end
+        else if (pop && !empty) begin ptr <= ptr - 1; dout <= mem[ptr-1]; end
+    end
+    assign full = (ptr == DEPTH);
+    assign empty = (ptr == 0);
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> Function call stack, expression evaluation in calculators.</p>
+
+    <h2>7. Content Addressable Memory (CAM)</h2>
+    <p>Search by data, returns matching address. Parallel comparison.</p>
+    <div class="diagram">
+   ┌─────────────────────────────────────┐
+   │            CAM Array                │
+   │  word0 │ match0 ──┬─ encoder ── address │
+   │  word1 │ match1 ──┤                     │
+   │  ...   │ ...      │                     │
+   └─────────────────────────────────────┘
+    </div>
+    <p><strong>Real‑world use:</strong> TLB (Translation Lookaside Buffer), cache tag memory, router MAC tables.</p>
+
+    <h2>8. Gray Code Counter</h2>
+    <p>Binary counter → Gray conversion: <code>gray = bin ^ (bin >> 1)</code>. Used for FIFO pointers.</p>
+    <pre><code>module gray_counter #(WIDTH=4) (
+    input clk, rst, en,
+    output reg [WIDTH-1:0] gray
+);
+    reg [WIDTH-1:0] bin;
+    always @(posedge clk or posedge rst) begin
+        if (rst) bin <= 0;
+        else if (en) bin <= bin + 1;
+    end
+    always @(*) gray = bin ^ (bin >> 1);
+endmodule</code></pre>
+
+    <h2>9. Clock Domain Crossing (CDC) Synchronizer (2‑FF)</h2>
+    <pre><code>module cdc_sync (
+    input clk_dest, rst,
+    input async_signal,
+    output reg sync_signal
+);
+    reg meta;
+    always @(posedge clk_dest or posedge rst) begin
+        if (rst) {meta, sync_signal} <= 2'b00;
+        else {meta, sync_signal} <= {async_signal, meta};
+    end
+endmodule</code></pre>
+    <p><strong>Metastability probability:</strong> reduced to <code>MTBF ~ e^(t/τ) / (f_clk * f_data)</code>. Two stages are enough for most applications.</p>
+
+    <h2>10. Linear Feedback Shift Register (LFSR)</h2>
+    <p>Pseudo‑random sequence generator. Maximal length: 2ⁿ‑1 states (non‑zero seed).</p>
+    <pre><code>module lfsr4 (
+    input clk, rst, en,
+    output reg [3:0] lfsr
+);
+    wire feedback = lfsr[3] ^ lfsr[2];
+    always @(posedge clk or posedge rst) begin
+        if (rst) lfsr <= 4'b0001;
+        else if (en) lfsr <= {lfsr[2:0], feedback};
+    end
+endmodule</code></pre>
+    <p><strong>Real‑world use:</strong> BIST (Built‑In Self‑Test), scrambling, CRC generation, fast counters.</p>
+
+    <h2>11. Pipelined ALU / Pipeline Basics</h2>
+    <p>Break combinational logic into stages separated by registers. Increases throughput: one result per clock cycle after initial latency.</p>
+    <div class="diagram">
+      Stage1       Stage2       Stage3
+    ┌──────┐    ┌──────┐    ┌──────┐
+    │Fetch │───→│Exec  │───→│WB    │───→ output
+    │ regs │    │ regs │    │ regs │
+    └──────┘    └──────┘    └──────┘
+    </div>
+    <p><strong>Trade‑off:</strong> more registers, potential hazards, but much higher clock frequency possible.</p>
+
+ 
+</html>
    
 </body>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 19 – Logic Synthesis: From RTL to Gates (Complete Reference)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #0056b3;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #003d80;
+            margin-top: 35px;
+            border-left: 5px solid #0056b3;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #1e4663;
+            margin-top: 25px;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #e9ecef;
+        }
+        .diagram {
+            background: #f8f9fa;
+            font-family: monospace;
+            white-space: pre;
+            padding: 15px;
+            border-left: 4px solid #0056b3;
+            margin: 20px 0;
+        }
+        .note {
+            background: #e7f3ff;
+            border-left: 5px solid #0056b3;
+            padding: 10px 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Day 19 – Logic Synthesis: From RTL to Gates</h1>
+    <p><strong>Complete reference – definitions, flow, constraints, synthesizable subset, and common pitfalls.</strong></p>
+
+    <h2>1. What is Logic Synthesis?</h2>
+    <p><strong>Logic synthesis</strong> is the process of converting a Register‑Transfer Level (RTL) description of a digital circuit (written in Verilog or VHDL) into a <strong>gate‑level netlist</strong> composed of standard cells (AND, OR, NOT, flip‑flops, etc.) from a technology library. It also performs <strong>optimization</strong> to meet area, speed, and power constraints.</p>
+    <p><strong>Why it matters:</strong> Without synthesis, RTL is only simulation. Synthesis produces the actual netlist that goes to placement and routing, and eventually to silicon.</p>
+
+    <h2>2. Inputs to Synthesis</h2>
+    <ul>
+        <li><strong>RTL code</strong> – must be <strong>synthesizable</strong> (subset of Verilog).</li>
+        <li><strong>Technology library</strong> – contains cell descriptions: function, area, delay (dependent on output load), power, and timing arcs.</li>
+        <li><strong>Constraints</strong> – define design goals: clock frequency, input/output delays, false paths, multicycle paths. Usually written in SDC (Synopsys Design Constraints).</li>
+    </ul>
+
+    <h2>3. Synthesis Flow – Three Main Steps</h2>
+    <div class="diagram">
+        RTL
+         │
+         ▼
+    ┌─────────────┐
+    │ Translation │ → Generic Boolean network
+    └─────────────┘
+         │
+         ▼
+    ┌─────────────┐
+    │ Optimization│ → Factoring, sharing, constant propagation, elimination
+    └─────────────┘
+         │
+         ▼
+    ┌─────────────┐
+    │Technology   │ → Map to library cells (NAND2, NOR2, DFF, etc.)
+    │   Mapping   │
+    └─────────────┘
+         │
+         ▼
+    Gate-level netlist
+    </div>
+    <ul>
+        <li><strong>Translation:</strong> Parses RTL into an internal representation (e.g., AND/INVERTER graphs).</li>
+        <li><strong>Logic optimization:</strong> Applies Boolean algebra laws to reduce area and delay. Example: <code>!(a & b) → (~a | ~b)</code> (DeMorgan).</li>
+        <li><strong>Technology mapping:</strong> Replaces optimized generic gates with cells from the target library. It also chooses cell drive strengths.</li>
+    </ul>
+
+    <h2>4. Constraints – The Language of Timing (SDC)</h2>
+    <p>Constraints tell the synthesizer how fast the design must run and the external environment.</p>
+    <pre><code># Clock period = 10 ns → 100 MHz
+create_clock -name clk -period 10.0 [get_ports clk]
+
+# Input delay: external logic takes 3 ns before clk edge
+set_input_delay -clock clk -max 3.0 [get_ports din*]
+
+# Output delay: external logic needs 2.5 ns after clk edge
+set_output_delay -clock clk -max 2.5 [get_ports dout*]
+
+# False paths (no timing check, e.g., between unrelated clocks)
+set_false_path -from [get_ports test_mode]</code></pre>
+
+    <h2>5. Synthesizable Verilog Subset</h2>
+    <table>
+        <tr><th>Construct</th><th>Synthesizable</th><th>Notes</th></tr>
+        <tr><td><code>module</code>, <code>endmodule</code></td><td>✅ Yes</td><td></td></tr>
+        <tr><td><code>input</code>, <code>output</code>, <code>inout</code></td><td>✅ Yes</td><td></td></tr>
+        <tr><td><code>wire</code>, <code>reg</code></td><td>✅ Yes</td><td></td></tr>
+        <tr><td><code>assign</code></td><td>✅ Yes</td><td>Continuous assignment</td></tr>
+        <tr><td><code>always @(posedge clk or posedge rst)</code></td><td>✅ Yes</td><td>Sequential logic</td></tr>
+        <tr><td><code>always @(*)</code></td><td>✅ Yes</td><td>Combinational logic (auto‑sensitivity)</td></tr>
+        <tr><td><code>if</code>, <code>else</code>, <code>case</code>, <code>casez</code></td><td>✅ Yes</td><td>Must be complete (no inferred latches)</td></tr>
+        <tr><td><code>for</code> loop with <strong>constant bound</strong></td><td>✅ Yes</td><td>Example: <code>for(i=0; i&lt;8; i=i+1)</code></td></tr>
+        <tr><td><code>parameter</code>, <code>localparam</code></td><td>✅ Yes</td><td></td></tr>
+        <tr><td><code>initial</code></td><td>❌ No</td><td>Only for testbenches</td></tr>
+        <tr><td><code>#delay</code></td><td>❌ No</td><td>Ignored by synthesis</td></tr>
+        <tr><td><code>while</code>, <code>repeat</code> (variable bound)</td><td>❌ No</td><td></td></tr>
+        <tr><td><code>fork/join</code></td><td>❌ No</td><td></td></tr>
+        <tr><td><code>force</code>, <code>release</code></td><td>❌ No</td><td></td></tr>
+    </table>
+
+    <h2>6. Common Synthesis Issues & How to Fix Them</h2>
+    <table>
+        <tr><th>Issue</th><th>Cause</th><th>Solution</th></tr>
+        <tr><td><strong>Inferred latch</strong></td><td>Missing <code>else</code> or <code>default</code> in combinational <code>always</code> block.</td><td>Assign a value to the output in all branches.</td></tr>
+        <tr><td><strong>Combinational loop</strong></td><td>Feedback path without a flip‑flop.</td><td>Break the loop; use sequential logic if needed.</td></tr>
+        <tr><td><strong>Multiple drivers</strong></td><td>Same net assigned in two <code>always</code> blocks.</td><td>Combine logic or use tri‑state buffers.</td></tr>
+        <tr><td><strong>Clock gating glitches</strong></td><td>AND/OR gate on clock line.</td><td>Use dedicated clock‑gating cell or enable pin on flip‑flop.</td></tr>
+        <tr><td><strong>Unintentional register</strong></td><td>Signals assigned in some but not all paths.</td><td>Ensure every path assigns the signal.</td></tr>
+    </table>
+
+    <h2>7. Optimization Trade‑offs – Area vs. Speed vs. Power</h2>
+    <ul>
+        <li><strong>Area minimization:</strong> Use smaller gates, share logic, reduce registers. May increase delay.</li>
+        <li><strong>Speed (timing) optimization:</strong> Parallelise logic, use faster cells, buffer long wires. Increases area and power.</li>
+        <li><strong>Power optimization:</strong> Reduce switching activity, use low‑power cells, clock gating. May increase area.</li>
+        <li>Synthesis tools allow you to set effort levels: <code>compile -map_effort high -area_effort medium</code>.</li>
+    </ul>
+
+    <h2>8. Synthesis Example: D Flip‑flop with Enable</h2>
+    <p><strong>RTL code:</strong></p>
+    <pre><code>always @(posedge clk or posedge rst) begin
+    if (rst) q <= 0;
+    else if (en) q <= d;
+end</code></pre>
+    <p><strong>After technology mapping (simplified):</strong></p>
+    <ul>
+        <li>One D flip‑flop (clock and asynchronous reset)</li>
+        <li>One 2:1 multiplexer (carry‑enabled data path)</li>
+        <li>Inverters and buffers as needed for timing</li>
+    </ul>
+
+    <h2>9. Synthesis Tools (Industry & Open Source)</h2>
+    <ul>
+        <li><strong>Synopsys Design Compiler</strong> – industry standard.</li>
+        <li><strong>Cadence Genus</strong> – modern, integrated with Innovus.</li>
+        <li><strong>Mentor (Siemens) Catapult</strong> – high‑level synthesis (HLS).</li>
+        <li><strong>Yosys</strong> – open‑source, popular for FPGA and small ASIC designs.</li>
+    </ul>
+
+    <h2>10. Synthesis vs. Simulation – Key Differences</h2>
+    <table>
+        <tr><th>Aspect</th><th>Simulation</th><th>Synthesis</th></tr>
+        <tr><td>Timing model</th><td>Ideal (unit or zero delay)</th><td>Real gate delays (depends on load)</th></tr>
+        <tr><td>All language constructs</th><td>Yes</th><td>Only synthesizable subset</th></tr>
+        <tr><td>Initial blocks</th><td>Allowed</th><td>Not used (reset instead)</th></tr>
+        <tr><td>Loops</th><td>Any bound</th><td>Only constant‑bound loops</th></tr>
+        <tr><td>Purpose</th><td>Verify functionality</th><tr><td>Generate gate‑level netlist</th></tr>
+    </table>
+
+   
+   
+</body>
+</html>
+
+
+
+            
 </html>
 </body>
 </html>
