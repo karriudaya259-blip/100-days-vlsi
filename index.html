@@ -3364,7 +3364,125 @@ end</code></pre>
 </body>
 </html>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 20 – Asynchronous FIFO (Gray‑coded pointers)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 { color: #003d80; border-bottom: 3px solid #003d80; padding-bottom: 10px; }
+        h2 { color: #003d80; margin-top: 35px; border-left: 5px solid #003d80; padding-left: 15px; }
+        img { max-width: 100%; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0; }
+        .code-link { background: #f4f4f4; padding: 10px; border-radius: 6px; font-family: monospace; }
+        .footer { margin-top: 50px; text-align: center; font-size: 0.9em; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Day 20 – Asynchronous FIFO (Gray‑coded pointers)</h1>
+    <p><strong>Date:</strong> April 27, 2026 | <strong>Topic:</strong> Safe data transfer between clock domains.</p>
 
+    <h2>🔹 Overview</h2>
+    <p>An asynchronous FIFO with Gray‑coded write/read pointers. Write clock: 100 MHz, read clock: 62.5 MHz. Data is written, then read back without metastability.</p>
+
+    <h2>📊 Waveform Proof</h2>
+    <img src="asyn_fifo.jpeg" alt="GTKWave waveform showing write and read operations">
+
+    <h2>🔧 Key Features</h2>
+    <ul>
+        <li>Gray pointer conversion: <code>gray = bin ^ (bin >> 1)</code></li>
+        <li>Two‑flip‑flop synchronisers for pointer crossing</li>
+        <li>Full flag: compare write Gray with synchronised read Gray (MSBs differ)</li>
+        <li>Empty flag: compare read Gray with synchronised write Gray</li>
+    </ul>
+
+    <div class="code-link">
+        <strong>Full Verilog code + testbench:</strong> <a href="https://github.com/karriudaya259-blip/100-days-vlsi/tree/main/day20_async_fifo">GitHub folder</a>
+    </div>
+
+   
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 21 – UART, PWM, SPI, Debouncer, Binary to BCD</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #ffffff;
+            color: #1e2a3e;
+            line-height: 1.6;
+        }
+        h1 { color: #003d80; border-bottom: 3px solid #003d80; padding-bottom: 10px; }
+        h2 { color: #003d80; margin-top: 35px; border-left: 5px solid #003d80; padding-left: 15px; }
+        img { max-width: 100%; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0; }
+        .module { background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .footer { margin-top: 50px; text-align: center; font-size: 0.9em; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Day 21 – Six Verilog Modules: UART, PWM, SPI, Debouncer, Bin2BCD</h1>
+    <p><strong>Date:</strong> April 27, 2026 | <strong>Topic:</strong> Practical building blocks for digital design.</p>
+
+    <div class="module">
+        <h2>📡 UART Transmitter</h2>
+        <img src="uart_tx.jpeg" alt="UART transmitter waveform (start bit, data, stop bit)">
+        <p>Serial transmission: start bit (0), 8 data bits LSB first, stop bit (1). Baud rate 9600 from 50 MHz clock.</p>
+    </div>
+
+    <div class="module">
+        <h2>📡 UART Receiver</h2>
+        <img src="uart_rx.jpeg" alt="UART receiver waveform (data valid pulse)">
+        <p>Oversampling, start bit detection, centre sampling, parallel output with valid flag.</p>
+    </div>
+
+    <div class="module">
+        <h2>🔧 PWM Generator (8‑bit)</h2>
+        <img src="pwm.jpeg" alt="PWM output for different duty cycles">
+        <p>pwm_out = (counter < duty). Duty cycle from 0 to 255/256.</p>
+    </div>
+
+    <div class="module">
+        <h2>⚡ SPI Master (simple)</h2>
+        <img src="spi.jpeg" alt="SPI master waveform: sclk, mosi, cs">
+        <p>Transmits 8 bits, generates sclk (divided from master clock), cs active low.</p>
+    </div>
+
+    <div class="module">
+        <h2>🔘 Debouncer</h2>
+        <img src="debounce.jpeg" alt="Debouncer waveform: noisy input vs clean output">
+        <p>Removes mechanical bouncing (timeout counter). Clean output changes only after stable for TIMEOUT cycles.</p>
+    </div>
+
+    <div class="module">
+        <h2>💱 Binary to BCD Converter (8‑bit)</h2>
+        <img src="bin2bcd.jpeg" alt="Binary to BCD conversion waveform">
+        <p>Double‑dabble algorithm: shift and add 3 if ≥5. Outputs three BCD digits.</p>
+    </div>
+
+    <div class="code-link">
+        <strong>Full Verilog code + testbenches:</strong> <a href="https://github.com/karriudaya259-blip/100-days-vlsi/tree/main/day21_uart_tx_rx_pwm_spi_debounce_bcd">GitHub folder</a>
+    </div>
+
+ 
+</body>
+</html>
+            
 
             
 </html>
