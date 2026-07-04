@@ -4652,602 +4652,1524 @@ endmodule
                 <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_cdc_handshake.v">🧪 TB</a>
             </div>
         </div>
+        <!-- ===================== DAY 37 ===================== -->
+<div class="day-card">
+    <h3>Day 37 <span class="topic">— Moore Machine (3-bit Up Counter)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 6, 2026</p>
+    <p><strong>Core Principle:</strong> Moore state machine — output depends only on current state, not on input.</p>
 
-        <!-- ================================ -->
-        <!-- DAY 38                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 38 <span class="topic">— Pulse Synchroniser</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
 <pre>
-// pulse_sync.v
-module pulse_sync (input clk_a, clk_b, rst, pulse_a, output pulse_b);
-    reg toggle_a, sync1, sync2;
-    always @(posedge clk_a or posedge rst)
-        if (rst) toggle_a <= 0;
-        else if (pulse_a) toggle_a <= ~toggle_a;
-    always @(posedge clk_b or posedge rst)
-        if (rst) {sync2, sync1} <= 0;
-        else {sync2, sync1} <= {sync1, toggle_a};
-    assign pulse_b = sync2 ^ sync1;
+module moore_3bit_counter (
+    input clk,
+    input rst,
+    input en,
+    output reg [2:0] count,
+    output reg done
+);
+
+    typedef enum logic [1:0] {
+        S0,
+        S1,
+        S2,
+        S3,
+        S4,
+        S5,
+        S6,
+        S7
+    } state_t;
+
+    state_t state, next_state;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            state <= S0;
+        else
+            state <= next_state;
+    end
+
+    always @(*) begin
+        next_state = state;
+        case (state)
+            S0: if (en) next_state = S1;
+            S1: if (en) next_state = S2;
+            S2: if (en) next_state = S3;
+            S3: if (en) next_state = S4;
+            S4: if (en) next_state = S5;
+            S5: if (en) next_state = S6;
+            S6: if (en) next_state = S7;
+            S7: if (en) next_state = S0;
+        endcase
+    end
+
+    always @(*) begin
+        case (state)
+            S0: count = 3'b000;
+            S1: count = 3'b001;
+            S2: count = 3'b010;
+            S3: count = 3'b011;
+            S4: count = 3'b100;
+            S5: count = 3'b101;
+            S6: count = 3'b110;
+            S7: count = 3'b111;
+        endcase
+        done = (state == S7);
+    end
+
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/pulse_sync.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_pulse_sync.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 39                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 39 <span class="topic">— Glitch‑Free Clock Mux</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
 <pre>
-// glitch_free_mux.v
-module glitch_free_mux (clk0, clk1, sel, rst, clk_out);
-    input clk0, clk1, sel, rst;
-    output clk_out;
-    reg sel0, sel1;
-    wire clk0_gated = clk0 & sel0;
-    wire clk1_gated = clk1 & sel1;
-    always @(posedge clk0 or posedge rst)
-        if (rst) sel0 <= 0;
-        else sel0 <= ~sel & ~sel1;
-    always @(posedge clk1 or posedge rst)
-        if (rst) sel1 <= 0;
-        else sel1 <= sel & ~sel0;
-    assign clk_out = clk0_gated | clk1_gated;
+`timescale 1ns/1ps
+module tb_moore_3bit_counter;
+
+    reg clk, rst, en;
+    wire [2:0] count;
+    wire done;
+
+    moore_3bit_counter uut (clk, rst, en, count, done);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_moore_3bit_counter.vcd");
+        $dumpvars(0, tb_moore_3bit_counter);
+        clk = 0; rst = 1; en = 0;
+        #10 rst = 0; en = 1;
+        #100 en = 0;
+        #20 $finish;
+    end
+
+    initial begin
+        $monitor("Time=%0t | count=%d | done=%b", $time, count, done);
+    end
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/glitch_free_mux.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_glitch_free_mux.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 40                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 40 <span class="topic">— Reset Synchroniser</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
 <pre>
-// reset_sync.v
-module reset_sync (input clk, rst_async, output rst_sync);
-    reg sync1, sync2;
-    always @(posedge clk or posedge rst_async)
-        if (rst_async) {sync2, sync1} <= 2'b11;
-        else {sync2, sync1} <= {sync1, 1'b0};
-    assign rst_sync = sync2;
+iverilog -o tb_moore_3bit_counter.vvp moore_3bit_counter.v tb_moore_3bit_counter.v
+vvp tb_moore_3bit_counter.vvp
+gtkwave tb_moore_3bit_counter.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Moore machines are used in traffic light controllers, vending machines, and CPU control units where the output is stable and independent of transient inputs.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/moore_3bit_counter.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_moore_3bit_counter.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 38 ===================== -->
+<div class="day-card">
+    <h3>Day 38 <span class="topic">— Mealy Machine (Edge Detector)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 7, 2026</p>
+    <p><strong>Core Principle:</strong> Mealy state machine — output depends on current state AND input, enabling faster response than Moore.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module mealy_edge_detector (
+    input clk,
+    input rst,
+    input signal,
+    output reg edge_detected
+);
+
+    typedef enum logic [1:0] {
+        IDLE,
+        EDGE
+    } state_t;
+
+    state_t state, next_state;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            state <= IDLE;
+        else
+            state <= next_state;
+    end
+
+    always @(*) begin
+        next_state = state;
+        edge_detected = 1'b0;
+        case (state)
+            IDLE: if (signal) begin
+                next_state = EDGE;
+                edge_detected = 1'b1;
+            end
+            EDGE: if (!signal) next_state = IDLE;
+        endcase
+    end
+
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/reset_sync.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_reset_sync.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 41                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 41 <span class="topic">— CRC‑8 Generator</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
 <pre>
-// crc8.v — Polynomial x^8 + x^2 + x + 1
-module crc8 (clk, rst, data, en, crc);
-    input clk, rst, en;
-    input [7:0] data;
-    output [7:0] crc;
-    reg [7:0] lfsr;
-    wire feedback = lfsr[7] ^ data[7];
-    always @(posedge clk or posedge rst)
-        if (rst) lfsr <= 0;
-        else if (en) lfsr <= {lfsr[6:0], 1'b0} ^ ({8{feedback}} & 8'b00000111);
-    assign crc = lfsr;
+`timescale 1ns/1ps
+module tb_mealy_edge_detector;
+
+    reg clk, rst, signal;
+    wire edge_detected;
+
+    mealy_edge_detector uut (clk, rst, signal, edge_detected);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_mealy_edge_detector.vcd");
+        $dumpvars(0, tb_mealy_edge_detector);
+        clk = 0; rst = 1; signal = 0;
+        #10 rst = 0;
+        #10 signal = 1;
+        #10 signal = 0;
+        #10 signal = 1;
+        #10 signal = 0;
+        #20 $finish;
+    end
+
+    initial begin
+        $monitor("Time=%0t | signal=%b | edge_detected=%b", $time, signal, edge_detected);
+    end
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/crc8.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_crc8.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 42                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 42 <span class="topic">— SPI Slave</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
 <pre>
-// spi_slave.v — 4‑wire full‑duplex
-module spi_slave (sck, cs, mosi, miso, tx_data, rx_data, data_ready);
-    input sck, cs, mosi;
-    input [7:0] tx_data;
-    output reg miso;
-    output reg [7:0] rx_data;
-    output reg data_ready;
-    reg [2:0] bit_cnt;
-    reg [7:0] shift_reg;
-    always @(posedge sck or negedge cs) begin
-        if (!cs) {bit_cnt, shift_reg, miso, data_ready} <= 0;
-        else begin
-            shift_reg <= {shift_reg[6:0], mosi};
-            miso <= tx_data[7 - bit_cnt];
-            if (bit_cnt == 7) data_ready <= 1;
-            bit_cnt <= bit_cnt + 1;
+iverilog -o tb_mealy_edge_detector.vvp mealy_edge_detector.v tb_mealy_edge_detector.v
+vvp tb_mealy_edge_detector.vvp
+gtkwave tb_mealy_edge_detector.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Edge detectors are used in digital communication for start bit detection (UART), button debouncing, and clock domain crossing synchronizers.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/mealy_edge_detector.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_mealy_edge_detector.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 39 ===================== -->
+<div class="day-card">
+    <h3>Day 39 <span class="topic">— Synchronous FIFO</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 8, 2026</p>
+    <p><strong>Core Principle:</strong> First-In-First-Out buffer with read and write pointers operating in the same clock domain.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module sync_fifo #(
+    parameter DEPTH = 8,
+    parameter WIDTH = 8
+) (
+    input clk,
+    input rst,
+    input wr_en,
+    input rd_en,
+    input [WIDTH-1:0] wr_data,
+    output [WIDTH-1:0] rd_data,
+    output full,
+    output empty
+);
+
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [$clog2(DEPTH)-1:0] wr_ptr, rd_ptr;
+    reg [$clog2(DEPTH):0] count;
+
+    assign rd_data = mem[rd_ptr];
+    assign full = (count == DEPTH);
+    assign empty = (count == 0);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            wr_ptr <= 0;
+            rd_ptr <= 0;
+            count <= 0;
+        end else begin
+            case ({wr_en, rd_en})
+                2'b10: begin
+                    mem[wr_ptr] <= wr_data;
+                    wr_ptr <= wr_ptr + 1;
+                    count <= count + 1;
+                end
+                2'b01: begin
+                    rd_ptr <= rd_ptr + 1;
+                    count <= count - 1;
+                end
+                2'b11: begin
+                    mem[wr_ptr] <= wr_data;
+                    wr_ptr <= wr_ptr + 1;
+                    rd_ptr <= rd_ptr + 1;
+                    // count stays same
+                end
+                default: ;
+            endcase
         end
     end
-    assign rx_data = shift_reg;
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/spi_slave.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_spi_slave.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 43                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 43 <span class="topic">— Round‑Robin Arbiter</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
 <pre>
-// rr_arbiter.v
-module rr_arbiter #(N=4) (clk, rst, req, grant);
-    input clk, rst;
-    input [N-1:0] req;
-    output reg [N-1:0] grant;
-    reg [N-1:0] last_grant;
-    integer i;
-    always @(posedge clk or posedge rst)
-        if (rst) last_grant <= 0;
-        else if (|req)
-            for (i=0; i<N; i=i+1)
-                if (req[(last_grant + i) % N]) begin
-                    grant <= 1 << ((last_grant + i) % N);
-                    last_grant <= (last_grant + i) % N;
-                    break;
-                end
-        else grant <= 0;
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/rr_arbiter.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_rr_arbiter.v">🧪 TB</a>
-            </div>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 44–46 (Theory)                -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Days 44–46 <span class="topic">— Skew, Jitter, RISC vs CISC</span> <span class="badge-new">New</span></h3>
-            <p><strong>Clock Skew:</strong> Difference in clock arrival at flip‑flops. <strong>Jitter:</strong> Variation in clock period over time.</p>
-            <p><strong>RISC vs CISC:</strong> RISC = fixed length, load‑store, simple decode. CISC = variable length, memory‑to‑memory, complex decode.</p>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 47                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 47 <span class="topic">— 32‑bit RISC‑V ALU</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module + TB Code</summary>
-                <div class="code-block">
-<pre>
-// alu.v — ADD, SUB, AND, OR, SLT
-module alu (a, b, alu_op, result, zero);
-    input [31:0] a, b;
-    input [2:0] alu_op;
-    output reg [31:0] result;
-    output reg zero;
-    always @(*) begin
-        case (alu_op)
-            3'b000: result = a + b;
-            3'b001: result = a - b;
-            3'b010: result = a & b;
-            3'b011: result = a | b;
-            3'b100: result = ($signed(a) < $signed(b)) ? 1 : 0;
-            default: result = 0;
-        endcase
-        zero = (result == 0);
-    end
-endmodule
-
-// tb_alu.v
 `timescale 1ns/1ps
-module tb_alu;
-    reg [31:0] a,b; reg [2:0] op; wire [31:0] res; wire z;
-    alu uut(a,b,op,res,z);
-    initial begin a=5; b=3; op=0; #10; $display("5+3=%d", res); #10 $finish; end
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/alu.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_alu.v">🧪 TB</a>
-            </div>
-        </div>
+module tb_sync_fifo;
 
-        <!-- ================================ -->
-        <!-- DAY 48                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 48 <span class="topic">— 32×32 Register File</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
-<pre>
-// regfile.v — x0 hardwired to 0
-module regfile (clk, rst, we, rs1_addr, rs2_addr, rd_addr, rd_data, rs1_data, rs2_data);
-    input clk, rst, we;
-    input [4:0] rs1_addr, rs2_addr, rd_addr;
-    input [31:0] rd_data;
-    output [31:0] rs1_data, rs2_data;
-    reg [31:0] regs [0:31];
-    integer i;
-    initial for (i=0; i<32; i=i+1) regs[i]=0;
-    always @(posedge clk or posedge rst)
-        if (rst) for(i=0;i<32;i=i+1) regs[i]<=0;
-        else if (we && rd_addr) regs[rd_addr] <= rd_data;
-    assign rs1_data = (rs1_addr==0) ? 0 : regs[rs1_addr];
-    assign rs2_data = (rs2_addr==0) ? 0 : regs[rs2_addr];
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/regfile.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_regfile.v">🧪 TB</a>
-            </div>
-        </div>
+    reg clk, rst, wr_en, rd_en;
+    reg [7:0] wr_data;
+    wire [7:0] rd_data;
+    wire full, empty;
 
-        <!-- ================================ -->
-        <!-- DAY 49                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 49 <span class="topic">— PC + Instruction Memory</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
-<pre>
-// pc_imem.v
-module pc_imem #(IMEM_SIZE=32) (clk, rst, en, pc, instr);
-    input clk, rst, en;
-    output reg [31:0] pc;
-    output [31:0] instr;
-    reg [31:0] imem [0:IMEM_SIZE-1];
-    integer i;
-    initial begin for(i=0;i<IMEM_SIZE;i=i+1) imem[i]=0; imem[0]=32'h00500093; end
-    always @(posedge clk or posedge rst)
-        if (rst) pc <= 0;
-        else if (en) pc <= pc + 4;
-    assign instr = imem[pc[31:2]];
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/pc_imem.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_pc_imem.v">🧪 TB</a>
-            </div>
-        </div>
+    sync_fifo #(.DEPTH(4), .WIDTH(8)) uut (clk, rst, wr_en, rd_en, wr_data, rd_data, full, empty);
 
-        <!-- ================================ -->
-        <!-- DAY 50                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 50 <span class="topic">— Instruction Decode</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
-<pre>
-// instr_decode.v
-module instr_decode (instr, reg_write, alu_src, alu_op, rs1_addr, rs2_addr, rd_addr, imm);
-    input [31:0] instr;
-    output reg reg_write, alu_src;
-    output reg [2:0] alu_op;
-    output reg [4:0] rs1_addr, rs2_addr, rd_addr;
-    output reg [31:0] imm;
-    wire [6:0] op = instr[6:0];
-    wire [2:0] f3 = instr[14:12];
-    wire [6:0] f7 = instr[31:25];
-    always @(*) begin
-        reg_write=0; alu_src=0; alu_op=0; imm=0;
-        rs1_addr=instr[19:15]; rs2_addr=instr[24:20]; rd_addr=instr[11:7];
-        case(op)
-            7'b0110011: if({f7,f3}==0) reg_write=1;
-            7'b0010011: begin reg_write=1; alu_src=1; imm={{20{instr[31]}},instr[31:20]}; end
-        endcase
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_sync_fifo.vcd");
+        $dumpvars(0, tb_sync_fifo);
+        clk = 0; rst = 1; wr_en = 0; rd_en = 0; wr_data = 0;
+        #10 rst = 0;
+
+        // Write 1, 2, 3
+        wr_data = 8'hA1; wr_en = 1; #10; wr_en = 0;
+        wr_data = 8'hB2; wr_en = 1; #10; wr_en = 0;
+        wr_data = 8'hC3; wr_en = 1; #10; wr_en = 0;
+
+        // Read 3 times
+        rd_en = 1; #10; rd_en = 0;
+        rd_en = 1; #10; rd_en = 0;
+        rd_en = 1; #10; rd_en = 0;
+
+        #20 $finish;
+    end
+
+    initial begin
+        $monitor("Time=%0t | wr_en=%b rd_en=%b | rd_data=%h | full=%b empty=%b",
+                 $time, wr_en, rd_en, rd_data, full, empty);
     end
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/instr_decode.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_instr_decode.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <!-- ================================ -->
-        <!-- DAY 51                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 51 <span class="topic">— Control Unit</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
 <pre>
-// control_unit.v
-module control_unit (opcode, reg_write, alu_src, mem_read, mem_write, mem_to_reg, branch, alu_op);
-    input [6:0] opcode;
-    output reg reg_write, alu_src, mem_read, mem_write, mem_to_reg, branch;
-    output reg [1:0] alu_op;
-    always @(*) begin
-        reg_write=0; alu_src=0; mem_read=0; mem_write=0; mem_to_reg=0; branch=0; alu_op=0;
-        case(opcode)
-            7'b0110011: begin reg_write=1; alu_op=2'b10; end
-            7'b0010011: begin reg_write=1; alu_src=1; alu_op=2'b10; end
-            7'b0000011: begin reg_write=1; alu_src=1; mem_read=1; mem_to_reg=1; alu_op=2'b00; end
-            7'b0100011: begin alu_src=1; mem_write=1; alu_op=2'b00; end
-            7'b1100011: begin branch=1; alu_op=2'b01; end
-        endcase
-    end
-endmodule
+iverilog -o tb_sync_fifo.vvp sync_fifo.v tb_sync_fifo.v
+vvp tb_sync_fifo.vvp
+gtkwave tb_sync_fifo.vcd
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/control_unit.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_control_unit.v">🧪 TB</a>
-            </div>
-        </div>
+    </div>
 
-        <!-- ================================ -->
-        <!-- DAY 52                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 52 <span class="topic">— ALU Control</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
+    <p><strong>Real-Life Application:</strong> Synchronous FIFOs are used in networking routers, DSP pipelines, and CPU cache buffers where the read and write operations happen at the same clock speed.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/sync_fifo.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_sync_fifo.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 40 ===================== -->
+<div class="day-card">
+    <h3>Day 40 <span class="topic">— Asynchronous FIFO (CDC)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 9, 2026</p>
+    <p><strong>Core Principle:</strong> FIFO with independent read and write clocks, using Gray-coded pointers to safely pass data between clock domains.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
 <pre>
-// alu_control.v
-module alu_control (alu_op, funct3, funct7, alu_sel);
-    input [1:0] alu_op;
-    input [2:0] funct3;
-    input [6:0] funct7;
-    output reg [2:0] alu_sel;
-    always @(*) begin
-        case(alu_op)
-            2'b00: alu_sel = 3'b000;
-            2'b01: alu_sel = 3'b001;
-            2'b10: case(funct3)
-                3'b000: alu_sel = (funct7==0) ? 3'b000 : 3'b001;
-                3'b111: alu_sel = 3'b010;
-                3'b110: alu_sel = 3'b011;
-                3'b010: alu_sel = 3'b100;
-                default: alu_sel = 0;
-            endcase
-        endcase
-    end
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/alu_control.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_alu_control.v">🧪 TB</a>
-            </div>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 53                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 53 <span class="topic">— Data Memory</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module Code</summary>
-                <div class="code-block">
-<pre>
-// data_memory.v
-module data_memory #(MEM_SIZE=64) (clk, we, addr, wd, rd);
-    input clk, we;
-    input [31:0] addr, wd;
-    output reg [31:0] rd;
-    reg [31:0] mem [0:MEM_SIZE-1];
-    integer i;
-    initial for(i=0;i<MEM_SIZE;i=i+1) mem[i]=0;
-    always @(*) rd = mem[addr[31:2]];
-    always @(posedge clk) if (we) mem[addr[31:2]] <= wd;
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/data_memory.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_data_memory.v">🧪 TB</a>
-            </div>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 54                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 54 <span class="topic">— Datapath Theory</span> <span class="badge-new">New</span></h3>
-            <p><strong>Blueprint:</strong> PC → IMEM → Decode → Regfile → ALU → DMEM → Writeback</p>
-            <p>Five stages: Fetch, Decode, Execute, Memory, Writeback.</p>
-            <p>Control signals: reg_write, alu_src, mem_read, mem_write, mem_to_reg, branch, alu_op.</p>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 55–58                         -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Days 55–58 <span class="topic">— Integration (PC, Decode, Control, Regfile, ALU, DMEM)</span> <span class="badge-new">New</span></h3>
-            <p>Connected all blocks into a single datapath. Verified control signals, ALU operations, and register writes. Added branch logic and writeback mux. All sub‑modules integrated.</p>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/riscv_cpu.v">📄 riscv_cpu.v</a>
-            </div>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 59                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 59 <span class="topic">— Single‑Cycle CPU — Working ✅</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Simulation Output</summary>
-                <div class="code-block">
-<pre>
-// Console output (simulation result)
-Time=0     PC=00000000 ALU=5
-Time=25000  PC=00000004 ALU=3
-Time=35000  PC=00000008 ALU=8
-
-✅ ADDI x1, x0, 5 → x1 = 5
-✅ ADDI x2, x0, 3 → x2 = 3
-✅ ADD x3, x1, x2 → x3 = 8
-✅ PC increments by 4
-✅ No X‑states
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/riscv_cpu.v">📄 Full CPU</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_riscv_cpu.v">🧪 TB</a>
-                <a href="https://jyoshnakarri.github.io/RISCV_Project/" target="_blank">🚀 Project Page</a>
-            </div>
-        </div>
-
-        <!-- ================================ -->
-        <!-- DAY 60                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 60 <span class="topic">— Pipeline Registers (Generic)</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module + TB</summary>
-                <div class="code-block">
-<pre>
-// pipeline_reg.v — Generic pipeline register
-module pipeline_reg #(WIDTH=32, INIT=0) (
-    input clk, rst, stall, flush,
-    input [WIDTH-1:0] din,
-    output [WIDTH-1:0] dout
+module async_fifo #(
+    parameter DEPTH = 8,
+    parameter WIDTH = 8
+) (
+    input wclk, rclk,
+    input wrst, rrst,
+    input wr_en, rd_en,
+    input [WIDTH-1:0] wr_data,
+    output [WIDTH-1:0] rd_data,
+    output full, empty
 );
-    reg [WIDTH-1:0] reg_data;
-    always @(posedge clk or posedge rst) begin
-        if (rst) reg_data <= INIT;
-        else if (flush) reg_data <= INIT;
-        else if (!stall) reg_data <= din;
-    end
-    assign dout = reg_data;
-endmodule
 
-// tb_pipeline_reg.v (simplified)
+    reg [WIDTH-1:0] mem [0:DEPTH-1];
+    reg [$clog2(DEPTH)-1:0] wr_ptr, rd_ptr;
+    reg [$clog2(DEPTH)-1:0] wr_ptr_gray, rd_ptr_gray;
+    reg [$clog2(DEPTH)-1:0] wr_ptr_sync, rd_ptr_sync;
+
+    // Write logic (wclk)
+    always @(posedge wclk or posedge wrst) begin
+        if (wrst) begin
+            wr_ptr <= 0;
+            wr_ptr_gray <= 0;
+        end else if (wr_en && !full) begin
+            mem[wr_ptr] <= wr_data;
+            wr_ptr <= wr_ptr + 1;
+            wr_ptr_gray <= wr_ptr_gray ^ {1'b0, wr_ptr_gray[$clog2(DEPTH)-1:1]}; // Gray code
+        end
+    end
+
+    // Read logic (rclk)
+    always @(posedge rclk or posedge rrst) begin
+        if (rrst) begin
+            rd_ptr <= 0;
+            rd_ptr_gray <= 0;
+        end else if (rd_en && !empty) begin
+            rd_ptr <= rd_ptr + 1;
+            rd_ptr_gray <= rd_ptr_gray ^ {1'b0, rd_ptr_gray[$clog2(DEPTH)-1:1]};
+        end
+    end
+
+    // Full/empty logic (simplified)
+    assign full = (wr_ptr_gray == rd_ptr_sync);
+    assign empty = (rd_ptr_gray == wr_ptr_sync);
+    assign rd_data = mem[rd_ptr];
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_async_fifo;
+
+    reg wclk, rclk, wrst, rrst, wr_en, rd_en;
+    reg [7:0] wr_data;
+    wire [7:0] rd_data;
+    wire full, empty;
+
+    async_fifo #(.DEPTH(4), .WIDTH(8)) uut (wclk, rclk, wrst, rrst, wr_en, rd_en, wr_data, rd_data, full, empty);
+
+    always #5 wclk = ~wclk;
+    always #7 rclk = ~rclk;
+
+    initial begin
+        $dumpfile("tb_async_fifo.vcd");
+        $dumpvars(0, tb_async_fifo);
+        wclk = 0; rclk = 0; wrst = 1; rrst = 1; wr_en = 0; rd_en = 0; wr_data = 0;
+        #10 wrst = 0; rrst = 0;
+        // Write on wclk, read on rclk
+        wr_data = 8'hA5; wr_en = 1; #10; wr_en = 0;
+        #20 rd_en = 1; #10; rd_en = 0;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_async_fifo.vvp async_fifo.v tb_async_fifo.v
+vvp tb_async_fifo.vvp
+gtkwave tb_async_fifo.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Asynchronous FIFOs are essential in multi-clock SoCs — USB controllers, Ethernet MACs, and processor-memory bridges all use CDC FIFOs to transfer data between independent clock domains.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/async_fifo.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_async_fifo.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 41 ===================== -->
+<div class="day-card">
+    <h3>Day 41 <span class="topic">— Setup &amp; Hold Time Violations (Theory)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 10, 2026</p>
+    <p><strong>Core Principle:</strong> Setup time is the minimum time data must be stable BEFORE the clock edge; hold time is the minimum time data must remain stable AFTER the clock edge. Violations cause metastability.</p>
+    <p><strong>Key Concept:</strong> Setup violations occur when combinational delay is too long. Hold violations occur when combinational delay is too short (rare in modern synthesis).</p>
+
+    <p><strong>Real-Life Application:</strong> All digital ICs (CPUs, GPUs, memory controllers) are characterized by setup/hold requirements. STA (Static Timing Analysis) is run on every chip tapeout to catch these violations.</p>
+</div>
+
+<!-- ===================== DAY 42 ===================== -->
+<div class="day-card">
+    <h3>Day 42 <span class="topic">— Clock Domain Crossing (CDC) — 2‑Flop Synchronizer</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 11, 2026</p>
+    <p><strong>Core Principle:</strong> Two consecutive flip-flops in the destination clock domain reduce metastability to a negligible probability.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module cdc_2flop #(
+    parameter WIDTH = 1
+) (
+    input clk_dst,
+    input rst_dst,
+    input [WIDTH-1:0] data_in,
+    output [WIDTH-1:0] data_out
+);
+
+    reg [WIDTH-1:0] sync1, sync2;
+
+    always @(posedge clk_dst or posedge rst_dst) begin
+        if (rst_dst) begin
+            sync1 <= 0;
+            sync2 <= 0;
+        end else begin
+            sync1 <= data_in;
+            sync2 <= sync1;
+        end
+    end
+
+    assign data_out = sync2;
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_cdc_2flop;
+
+    reg clk_dst, rst_dst;
+    reg data_in;
+    wire data_out;
+
+    cdc_2flop uut (clk_dst, rst_dst, data_in, data_out);
+
+    always #5 clk_dst = ~clk_dst;
+
+    initial begin
+        $dumpfile("tb_cdc_2flop.vcd");
+        $dumpvars(0, tb_cdc_2flop);
+        clk_dst = 0; rst_dst = 1; data_in = 0;
+        #10 rst_dst = 0;
+        #10 data_in = 1;
+        #10 data_in = 0;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_cdc_2flop.vvp cdc_2flop.v tb_cdc_2flop.v
+vvp tb_cdc_2flop.vvp
+gtkwave tb_cdc_2flop.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Used extensively in multi-clock SoCs for control signals (interrupts, resets, handshake) crossing clock domains.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/cdc_2flop.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_cdc_2flop.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 43 ===================== -->
+<div class="day-card">
+    <h3>Day 43 <span class="topic">— APB Protocol (Advanced Peripheral Bus) — Slave Interface</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 12, 2026</p>
+    <p><strong>Core Principle:</strong> APB is a low-power, low-complexity bus protocol used in AMBA (ARM) for connecting peripherals. It has three states: IDLE, SETUP, and ACCESS.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module apb_slave (
+    input clk,
+    input rst,
+    input psel,
+    input penable,
+    input pwrite,
+    input [31:0] paddr,
+    input [31:0] pwdata,
+    output reg [31:0] prdata,
+    output reg pready
+);
+
+    reg [31:0] reg0, reg1, reg2, reg3;
+    reg [1:0] state;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            state <= 0;
+            pready <= 0;
+            reg0 <= 0; reg1 <= 0; reg2 <= 0; reg3 <= 0;
+        end else begin
+            case (state)
+                0: if (psel && !penable) state <= 1; // SETUP
+                1: begin // ACCESS
+                    if (pwrite) begin
+                        case (paddr[3:2])
+                            2'b00: reg0 <= pwdata;
+                            2'b01: reg1 <= pwdata;
+                            2'b10: reg2 <= pwdata;
+                            2'b11: reg3 <= pwdata;
+                        endcase
+                    end else begin
+                        case (paddr[3:2])
+                            2'b00: prdata <= reg0;
+                            2'b01: prdata <= reg1;
+                            2'b10: prdata <= reg2;
+                            2'b11: prdata <= reg3;
+                        endcase
+                    end
+                    pready <= 1;
+                    state <= 0;
+                end
+            endcase
+        end
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_apb_slave;
+
+    reg clk, rst, psel, penable, pwrite;
+    reg [31:0] paddr, pwdata;
+    wire [31:0] prdata;
+    wire pready;
+
+    apb_slave uut (clk, rst, psel, penable, pwrite, paddr, pwdata, prdata, pready);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_apb_slave.vcd");
+        $dumpvars(0, tb_apb_slave);
+        clk = 0; rst = 1; psel = 0; penable = 0; pwrite = 0; paddr = 0; pwdata = 0;
+        #10 rst = 0;
+        // Write to reg0
+        psel = 1; pwrite = 1; paddr = 0; pwdata = 32'hA5A5A5A5; #10;
+        penable = 1; #10;
+        penable = 0; psel = 0;
+        // Read reg0
+        psel = 1; pwrite = 0; paddr = 0; #10;
+        penable = 1; #10;
+        penable = 0; psel = 0;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_apb_slave.vvp apb_slave.v tb_apb_slave.v
+vvp tb_apb_slave.vvp
+gtkwave tb_apb_slave.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> APB is used in ARM-based SoCs to interface low-power peripherals like UART, I2C, GPIO, timers, and watchdogs.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/apb_slave.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_apb_slave.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 44 ===================== -->
+<div class="day-card">
+    <h3>Day 44 <span class="topic">— AHB Protocol (Advanced High‑Performance Bus) — Basic Master</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 13, 2026</p>
+    <p><strong>Core Principle:</strong> AHB is a high-bandwidth bus used in SoCs for connecting processors, memory controllers, and DMA. It supports burst transfers and split transactions.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module ahb_master (
+    input clk,
+    input rst,
+    input hready,
+    input hresp,
+    input [31:0] hrdata,
+    output reg [31:0] haddr,
+    output reg [31:0] hwdata,
+    output reg hwrite,
+    output reg hsel,
+    output reg htrans,
+    output reg [2:0] hsize,
+    output reg [2:0] hburst
+);
+
+    typedef enum {IDLE, BUSY, NONSEQ} trans_t;
+    trans_t trans;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            haddr <= 0; hwdata <= 0; hwrite <= 0; hsel <= 0; htrans <= 0; hsize <= 0; hburst <= 0;
+            trans <= IDLE;
+        end else begin
+            if (hready) begin
+                case (trans)
+                    IDLE: if (hsel) trans <= BUSY;
+                    BUSY: trans <= NONSEQ;
+                    NONSEQ: trans <= IDLE;
+                endcase
+            end
+        end
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_ahb_master;
+
+    reg clk, rst, hready, hresp;
+    reg [31:0] hrdata;
+    wire [31:0] haddr, hwdata;
+    wire hwrite, hsel;
+    wire [1:0] htrans;
+    wire [2:0] hsize, hburst;
+
+    ahb_master uut (clk, rst, hready, hresp, hrdata, haddr, hwdata, hwrite, hsel, htrans, hsize, hburst);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_ahb_master.vcd");
+        $dumpvars(0, tb_ahb_master);
+        clk = 0; rst = 1; hready = 0; hresp = 0; hrdata = 0;
+        #10 rst = 0;
+        hready = 1;
+        #10 hsel = 1;
+        #10 hsel = 0;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_ahb_master.vvp ahb_master.v tb_ahb_master.v
+vvp tb_ahb_master.vvp
+gtkwave tb_ahb_master.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> AHB is used in ARM Cortex-M and Cortex-A based SoCs for high-speed memory and DMA interfaces.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/ahb_master.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_ahb_master.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 45 ===================== -->
+<div class="day-card">
+    <h3>Day 45 <span class="topic">— Pipelining Theory (Intro)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 14, 2026</p>
+    <p><strong>Core Principle:</strong> Pipelining breaks a large combinational path into smaller stages separated by registers, increasing clock frequency and throughput.</p>
+    <p><strong>Key Trade-off:</strong> Increased latency (first result takes more cycles) but improved throughput (1 result per cycle after pipeline fills).</p>
+    <p><strong>Real-Life Application:</strong> Every modern CPU, GPU, and DSP uses deep pipelines (e.g., 14-stage in Intel Core, 5-stage in RISC‑V).</p>
+</div>
+
+<!-- ===================== DAY 46 ===================== -->
+<div class="day-card">
+    <h3>Day 46 <span class="topic">— Pipeline Register (Generic)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 15, 2026</p>
+    <p><strong>Core Principle:</strong> A pipeline register holds data between pipeline stages, controlled by stall and flush signals.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module pipeline_reg #(
+    parameter WIDTH = 32,
+    parameter INIT = 0
+) (
+    input clk,
+    input rst,
+    input stall,
+    input flush,
+    input [WIDTH-1:0] din,
+    output reg [WIDTH-1:0] dout
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)          dout <= INIT;
+        else if (flush)   dout <= INIT;
+        else if (!stall)  dout <= din;
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
 `timescale 1ns/1ps
 module tb_pipeline_reg;
+
     reg clk, rst, stall, flush;
     reg [7:0] din;
     wire [7:0] dout;
-    pipeline_reg #(.WIDTH(8), .INIT(8'hAA)) uut (...);
-    // test cases: normal, stall, flush
-endmodule
-</pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/pipeline_reg.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_pipeline_reg.v">🧪 TB</a>
-            </div>
-        </div>
 
-        <!-- ================================ -->
-        <!-- DAY 61                            -->
-        <!-- ================================ -->
-        <div class="day-card">
-            <h3>Day 61 <span class="topic">— IF/ID Pipeline Register (Fetch → Decode)</span> <span class="badge-new">New</span></h3>
-            <details>
-                <summary>📘 View Module + TB</summary>
-                <div class="code-block">
-<pre>
-// if_id_reg.v
-module if_id_reg (
-    input clk, rst, stall, flush,
-    input [31:0] pc_plus4_in, instr_in,
-    output reg [31:0] pc_plus4_out, instr_out
-);
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin pc_plus4_out <= 0; instr_out <= 0; end
-        else if (flush) begin pc_plus4_out <= 0; instr_out <= 0; end
-        else if (!stall) begin pc_plus4_out <= pc_plus4_in; instr_out <= instr_in; end
+    pipeline_reg #(.WIDTH(8), .INIT(8'hAA)) uut (clk, rst, stall, flush, din, dout);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_pipeline_reg.vcd");
+        $dumpvars(0, tb_pipeline_reg);
+        clk = 0; rst = 1; stall = 0; flush = 0; din = 0;
+        #10 rst = 0;
+        din = 8'h12; #10;
+        stall = 1; din = 8'h34; #10;
+        stall = 0; flush = 1; #10;
+        flush = 0; din = 8'h78; #10;
+        #20 $finish;
     end
 endmodule
+</pre>
+        </div>
+    </details>
 
-// tb_if_id_reg.v
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_pipeline_reg.vvp pipeline_reg.v tb_pipeline_reg.v
+vvp tb_pipeline_reg.vvp
+gtkwave tb_pipeline_reg.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Pipeline registers are used in every pipelined CPU (e.g., IF/ID, ID/EX, EX/MEM, MEM/WB in RISC‑V).</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/pipeline_reg.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_pipeline_reg.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 47 ===================== -->
+<div class="day-card">
+    <h3>Day 47 <span class="topic">— IF/ID Pipeline Register</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 16, 2026</p>
+    <p><strong>Core Principle:</strong> Holds instruction and PC+4 between Fetch and Decode stages.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module if_id_reg (
+    input clk,
+    input rst,
+    input stall,
+    input flush,
+    input [31:0] pc_plus4_in,
+    input [31:0] instr_in,
+    output reg [31:0] pc_plus4_out,
+    output reg [31:0] instr_out
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            pc_plus4_out <= 32'b0;
+            instr_out <= 32'b0;
+        end else if (flush) begin
+            pc_plus4_out <= 32'b0;
+            instr_out <= 32'b0;
+        end else if (!stall) begin
+            pc_plus4_out <= pc_plus4_in;
+            instr_out <= instr_in;
+        end
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
 `timescale 1ns/1ps
 module tb_if_id_reg;
+
     reg clk, rst, stall, flush;
     reg [31:0] pc_plus4_in, instr_in;
     wire [31:0] pc_plus4_out, instr_out;
-    if_id_reg uut (...);
-    // test cases: normal, stall, flush
+
+    if_id_reg uut (clk, rst, stall, flush, pc_plus4_in, instr_in, pc_plus4_out, instr_out);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_if_id_reg.vcd");
+        $dumpvars(0, tb_if_id_reg);
+        clk = 0; rst = 1; stall = 0; flush = 0;
+        pc_plus4_in = 0; instr_in = 0;
+        #10 rst = 0;
+        pc_plus4_in = 32'h00000004; instr_in = 32'h00500093; #10;
+        stall = 1; pc_plus4_in = 32'h00000008; instr_in = 32'h00300113; #10;
+        stall = 0; flush = 1; #10;
+        flush = 0; pc_plus4_in = 32'h0000000c; instr_in = 32'h002081b3; #10;
+        #20 $finish;
+    end
 endmodule
 </pre>
-                </div>
-            </details>
-            <div class="links">
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/if_id_reg.v">📄 Module</a>
-                <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_if_id_reg.v">🧪 TB</a>
-            </div>
         </div>
+    </details>
 
-        <footer>
-            <p>Built with Verilog, Icarus, GTKWave &amp; ☕</p>
-            <p><a href="https://github.com/jyoshnakarri/100-days-vlsi" target="_blank">Full Repository</a></p>
-        </footer>
-
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_if_id_reg.vvp if_id_reg.v tb_if_id_reg.v
+vvp tb_if_id_reg.vvp
+gtkwave tb_if_id_reg.vcd
+</pre>
     </div>
-</body>
-</html>
 
+    <p><strong>Real-Life Application:</strong> Used in RISC‑V, ARM, and x86 pipelines to separate instruction fetch from decode.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/if_id_reg.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_if_id_reg.v">🧪 TB</a>
+    </div>
 </div>
-</body>
-</html>
+
+<!-- ===================== DAY 48 ===================== -->
+<div class="day-card">
+    <h3>Day 48 <span class="topic">— ID/EX Pipeline Register</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 17, 2026</p>
+    <p><strong>Core Principle:</strong> Holds decoded operands (rs1_data, rs2_data, imm) and control signals between Decode and Execute stages.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module id_ex_reg (
+    input clk,
+    input rst,
+    input stall,
+    input flush,
+    input [161:0] din,   // packed bus
+    output reg [161:0] dout
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst || flush)
+            dout <= 0;
+        else if (!stall)
+            dout <= din;
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_id_ex_reg;
+
+    reg clk, rst, stall, flush;
+    reg [161:0] din;
+    wire [161:0] dout;
+
+    id_ex_reg uut (clk, rst, stall, flush, din, dout);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_id_ex_reg.vcd");
+        $dumpvars(0, tb_id_ex_reg);
+        clk = 0; rst = 1; stall = 0; flush = 0; din = 0;
+        #10 rst = 0;
+        din[63:32] = 5; din[127:96] = 10; din[128] = 1; #10;
+        stall = 1; din[63:32] = 99; #10;
+        stall = 0; flush = 1; #10;
+        flush = 0; din[63:32] = 7; #10;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_id_ex_reg.vvp id_ex_reg.v tb_id_ex_reg.v
+vvp tb_id_ex_reg.vvp
+gtkwave tb_id_ex_reg.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Separates instruction decode from execution — critical in all pipelined processors.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/id_ex_reg.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_id_ex_reg.v">🧪 TB</a>
+    </div>
 </div>
-</body>
-</html>
-                    
-</html>
-</body>
+
+<!-- ===================== DAY 49 ===================== -->
+<div class="day-card">
+    <h3>Day 49 <span class="topic">— EX/MEM Pipeline Register</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 18, 2026</p>
+    <p><strong>Core Principle:</strong> Holds ALU result, store data, and memory control signals between Execute and Memory stages.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module ex_mem_reg (
+    input clk,
+    input rst,
+    input stall,
+    input flush,
+    input [72:0] din,   // alu_result, rs2_data, rd, mem_controls
+    output reg [72:0] dout
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst || flush)
+            dout <= 0;
+        else if (!stall)
+            dout <= din;
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_ex_mem_reg;
+
+    reg clk, rst, stall, flush;
+    reg [72:0] din;
+    wire [72:0] dout;
+
+    ex_mem_reg uut (clk, rst, stall, flush, din, dout);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_ex_mem_reg.vcd");
+        $dumpvars(0, tb_ex_mem_reg);
+        clk = 0; rst = 1; stall = 0; flush = 0; din = 0;
+        #10 rst = 0;
+        din[31:0] = 8; din[63:32] = 3; din[68:64] = 3; din[69] = 1; #10;
+        stall = 1; din[31:0] = 99; #10;
+        stall = 0; flush = 1; #10;
+        flush = 0; din[31:0] = 15; #10;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_ex_mem_reg.vvp ex_mem_reg.v tb_ex_mem_reg.v
+vvp tb_ex_mem_reg.vvp
+gtkwave tb_ex_mem_reg.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Holds ALU result before memory access — used in all pipelined CPUs.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/ex_mem_reg.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_ex_mem_reg.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 50 ===================== -->
+<div class="day-card">
+    <h3>Day 50 <span class="topic">— MEM/WB Pipeline Register</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 19, 2026</p>
+    <p><strong>Core Principle:</strong> Holds memory read data, ALU result, and writeback control signals between Memory and Writeback stages.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module mem_wb_reg (
+    input clk,
+    input rst,
+    input stall,
+    input flush,
+    input [69:0] din,   // mem_rd_data, alu_result, rd, reg_write
+    output reg [69:0] dout
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst || flush)
+            dout <= 0;
+        else if (!stall)
+            dout <= din;
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_mem_wb_reg;
+
+    reg clk, rst, stall, flush;
+    reg [69:0] din;
+    wire [69:0] dout;
+
+    mem_wb_reg uut (clk, rst, stall, flush, din, dout);
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("tb_mem_wb_reg.vcd");
+        $dumpvars(0, tb_mem_wb_reg);
+        clk = 0; rst = 1; stall = 0; flush = 0; din = 0;
+        #10 rst = 0;
+        din[31:0] = 42; din[63:32] = 8; din[68:64] = 3; din[69] = 1; #10;
+        stall = 1; din[31:0] = 99; #10;
+        stall = 0; flush = 1; #10;
+        flush = 0; din[31:0] = 100; #10;
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_mem_wb_reg.vvp mem_wb_reg.v tb_mem_wb_reg.v
+vvp tb_mem_wb_reg.vvp
+gtkwave tb_mem_wb_reg.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Final pipeline stage before writeback — completes the 5-stage RISC‑V pipeline.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/mem_wb_reg.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_mem_wb_reg.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 51 ===================== -->
+<div class="day-card">
+    <h3>Day 51 <span class="topic">— Full 5‑Stage RISC‑V Pipeline (Integration)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 20, 2026</p>
+    <p><strong>Core Principle:</strong> All 5 stages — Fetch, Decode, Execute, Memory, Writeback — connected via pipeline registers, enabling 1 instruction/cycle throughput.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module riscv_pipeline (
+    input clk,
+    input rst,
+    output [31:0] pc,
+    output [31:0] alu_result,
+    output [31:0] mem_rd_data,
+    output mem_we
+);
+
+    // PC + IMEM (Fetch)
+    reg [31:0] pc_reg;
+    wire [31:0] pc_next = pc_reg + 4;
+    wire [31:0] instr;
+    imem u_imem (.addr(pc_reg), .instr(instr));
+
+    // IF/ID
+    wire [31:0] pc_plus4_if, instr_if;
+    if_id_reg u_if_id (clk, rst, 1'b0, 1'b0, pc_next, instr, pc_plus4_if, instr_if);
+
+    // Decode + Control + Regfile (Decode)
+    // ... (full implementation in GitHub)
+
+    // ID/EX
+    id_ex_reg u_id_ex (clk, rst, 1'b0, 1'b0, id_ex_din, id_ex_dout);
+
+    // ALU + ALU Control (Execute)
+    // ... (full implementation in GitHub)
+
+    // EX/MEM
+    ex_mem_reg u_ex_mem (clk, rst, 1'b0, 1'b0, ex_mem_din, ex_mem_dout);
+
+    // Data Memory (Memory)
+    // ... (full implementation in GitHub)
+
+    // MEM/WB
+    mem_wb_reg u_mem_wb (clk, rst, 1'b0, 1'b0, mem_wb_din, mem_wb_dout);
+
+    // Writeback
+    // ... (full implementation in GitHub)
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o riscv_pipeline.vvp imem.v if_id_reg.v id_ex_reg.v ex_mem_reg.v mem_wb_reg.v control_unit.v alu.v regfile.v data_memory.v riscv_pipeline.v tb_riscv_pipeline.v
+vvp riscv_pipeline.vvp
+gtkwave riscv_pipeline.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> All modern RISC‑V, ARM, and x86 cores use this 5-stage (or deeper) pipeline structure.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/riscv_pipeline.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_riscv_pipeline.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 52 ===================== -->
+<div class="day-card">
+    <h3>Day 52 <span class="topic">— Data Hazard: Forwarding Unit</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 21, 2026</p>
+    <p><strong>Core Principle:</strong> Forwarding (bypassing) sends ALU output directly from EX/MEM or MEM/WB to the ALU inputs, avoiding stalls for most data hazards.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module forwarding_unit (
+    input [4:0] rs1,
+    input [4:0] rs2,
+    input [4:0] ex_mem_rd,
+    input [4:0] mem_wb_rd,
+    input ex_mem_reg_write,
+    input mem_wb_reg_write,
+    output [1:0] forward_rs1,
+    output [1:0] forward_rs2
+);
+
+    assign forward_rs1 = (ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == rs1)) ? 2'b10 :
+                         (mem_wb_reg_write && (mem_wb_rd != 0) && (mem_wb_rd == rs1)) ? 2'b01 :
+                         2'b00;
+
+    assign forward_rs2 = (ex_mem_reg_write && (ex_mem_rd != 0) && (ex_mem_rd == rs2)) ? 2'b10 :
+                         (mem_wb_reg_write && (mem_wb_rd != 0) && (mem_wb_rd == rs2)) ? 2'b01 :
+                         2'b00;
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_forwarding_unit;
+
+    reg [4:0] rs1, rs2, ex_mem_rd, mem_wb_rd;
+    reg ex_mem_reg_write, mem_wb_reg_write;
+    wire [1:0] forward_rs1, forward_rs2;
+
+    forwarding_unit uut (rs1, rs2, ex_mem_rd, mem_wb_rd, ex_mem_reg_write, mem_wb_reg_write, forward_rs1, forward_rs2);
+
+    initial begin
+        $dumpfile("tb_forwarding_unit.vcd");
+        $dumpvars(0, tb_forwarding_unit);
+        rs1 = 1; rs2 = 2; ex_mem_rd = 1; ex_mem_reg_write = 1; #10;
+        $display("forward_rs1 = %b (expected 10)", forward_rs1);
+        ex_mem_reg_write = 0; mem_wb_rd = 2; mem_wb_reg_write = 1; #10;
+        $display("forward_rs2 = %b (expected 01)", forward_rs2);
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_forwarding_unit.vvp forwarding_unit.v tb_forwarding_unit.v
+vvp tb_forwarding_unit.vvp
+gtkwave tb_forwarding_unit.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Forwarding is used in every high-performance CPU (RISC‑V, ARM, x86) to reduce pipeline stalls.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/forwarding_unit.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_forwarding_unit.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 53 ===================== -->
+<div class="day-card">
+    <h3>Day 53 <span class="topic">— Data Hazard: Load‑Use Hazard Detection</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 22, 2026</p>
+    <p><strong>Core Principle:</strong> A load instruction followed by an ALU instruction that uses the loaded value forces a 1‑cycle stall because the data is not ready until after MEM stage.</p>
+
+    <details>
+        <summary>📘 View Verilog Code</summary>
+        <div class="code-block">
+<pre>
+module hazard_detection_unit (
+    input [4:0] id_ex_rs1,
+    input [4:0] id_ex_rs2,
+    input [4:0] if_id_rs1,
+    input [4:0] if_id_rs2,
+    input id_ex_mem_read,
+    output reg stall
+);
+
+    always @(*) begin
+        stall = 0;
+        if (id_ex_mem_read) begin
+            if (id_ex_rs1 == if_id_rs1 || id_ex_rs1 == if_id_rs2 ||
+                id_ex_rs2 == if_id_rs1 || id_ex_rs2 == if_id_rs2) begin
+                stall = 1;
+            end
+        end
+    end
+
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <details>
+        <summary>🧪 View Testbench</summary>
+        <div class="code-block">
+<pre>
+`timescale 1ns/1ps
+module tb_hazard_detection_unit;
+
+    reg [4:0] id_ex_rs1, id_ex_rs2, if_id_rs1, if_id_rs2;
+    reg id_ex_mem_read;
+    wire stall;
+
+    hazard_detection_unit uut (id_ex_rs1, id_ex_rs2, if_id_rs1, if_id_rs2, id_ex_mem_read, stall);
+
+    initial begin
+        $dumpfile("tb_hazard_detection_unit.vcd");
+        $dumpvars(0, tb_hazard_detection_unit);
+        id_ex_rs1 = 1; if_id_rs1 = 1; id_ex_mem_read = 1; #10;
+        $display("stall = %b (expected 1)", stall);
+        id_ex_mem_read = 0; #10;
+        $display("stall = %b (expected 0)", stall);
+        #20 $finish;
+    end
+endmodule
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o tb_hazard_detection_unit.vvp hazard_detection_unit.v tb_hazard_detection_unit.v
+vvp tb_hazard_detection_unit.vvp
+gtkwave tb_hazard_detection_unit.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> Load-use stalls are unavoidable in all in-order pipelined CPUs. This unit detects the condition and inserts a bubble.</p>
+    <div class="day-links">
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/hazard_detection_unit.v">📄 Module</a>
+        <a href="https://github.com/jyoshnakarri/100-days-vlsi/blob/main/tb_hazard_detection_unit.v">🧪 TB</a>
+    </div>
+</div>
+
+<!-- ===================== DAY 54 ===================== -->
+<div class="day-card">
+    <h3>Day 54 <span class="topic">— Control Hazard: Branch Prediction (Not Taken)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 23, 2026</p>
+    <p><strong>Core Principle:</strong> Assume branch not taken; fetch sequentially. If branch is actually taken, flush the pipeline and fetch from target.</p>
+
+    <p><strong>Key Concept:</strong> A "flush" is just asserting the `flush` signal on IF/ID and ID/EX registers, converting fetched instructions to NOPs.</p>
+
+    <p><strong>Real-Life Application:</strong> Almost all embedded RISC‑V cores (e.g., SiFive E series) use this simple branch prediction strategy.</p>
+</div>
+
+<!-- ===================== DAY 55 ===================== -->
+<div class="day-card">
+    <h3>Day 55 <span class="topic">— Pipeline Hazard Integration (Full Control)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 24, 2026</p>
+    <p><strong>Core Principle:</strong> Forwarding + load-use detection + branch flushing = fully functional pipelined RISC‑V CPU with correct control flow.</p>
+
+    <p><strong>Key Insight:</strong> Pipeline hazards are solvable with three units: forwarding (data), hazard detection (load-use), and flush (branches).</p>
+
+    <p><strong>Real-Life Application:</strong> All 5‑stage RISC‑V cores implement exactly this combination of hazard resolution techniques.</p>
+</div>
+
+<!-- ===================== DAY 56 ===================== -->
+<div class="day-card">
+    <h3>Day 56 <span class="topic">— Pipelined CPU Verification (Test Program)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 25, 2026</p>
+    <p><strong>Core Principle:</strong> Run a test program (ADDI → ADD → SW → LW → BEQ) and verify all pipeline stages using waveform inspection.</p>
+
+    <details>
+        <summary>📘 View Test Program</summary>
+        <div class="code-block">
+<pre>
+// Program to test pipeline:
+// ADDI x1, x0, 5
+// ADDI x2, x0, 3
+// ADD x3, x1, x2
+// SW x3, 0(x0)
+// LW x4, 0(x0)
+// BEQ x4, x3, loop
+
+rom[0] = 32'h00500093;   // addi x1, x0, 5
+rom[1] = 32'h00300113;   // addi x2, x0, 3
+rom[2] = 32'h002081b3;   // add x3, x1, x2
+rom[3] = 32'h00302023;   // sw x3, 0(x0)
+rom[4] = 32'h00302103;   // lw x4, 0(x0)
+rom[5] = 32'hfe1ff0ef;   // jal loop
+</pre>
+        </div>
+    </details>
+
+    <p><strong>Simulation Commands:</strong></p>
+    <div class="code-block">
+<pre>
+iverilog -o riscv_pipeline.vvp imem.v if_id_reg.v id_ex_reg.v ex_mem_reg.v mem_wb_reg.v control_unit.v alu.v regfile.v data_memory.v forwarding_unit.v hazard_detection_unit.v riscv_pipeline.v tb_riscv_pipeline.v
+vvp riscv_pipeline.vvp
+gtkwave riscv_pipeline.vcd
+</pre>
+    </div>
+
+    <p><strong>Real-Life Application:</strong> All RISC‑V cores are verified with similar test programs before tapeout.</p>
+</div>
+
+<!-- ===================== DAY 57 ===================== -->
+<div class="day-card">
+    <h3>Day 57 <span class="topic">— Pipeline Performance Analysis (CPI, Throughput)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 26, 2026</p>
+    <p><strong>Core Principle:</strong> Ideal CPI = 1. Real CPI = 1 + (stall cycles) + (flush cycles). Measure performance of your pipeline.</p>
+
+    <p><strong>Key Metric:</strong> For your test program, you should observe ~1.1 CPI (one stall for load-use, one flush for branch).</p>
+
+    <p><strong>Real-Life Application:</strong> All CPU architects measure CPI to evaluate pipeline efficiency and guide microarchitectural improvements.</p>
+</div>
+
+<!-- ===================== DAY 58 ===================== -->
+<div class="day-card">
+    <h3>Day 58 <span class="topic">— Single‑Cycle vs Pipelined Comparison</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 27, 2026</p>
+    <p><strong>Core Principle:</strong> Single‑cycle: 1 instruction / 1 cycle (long clock period). Pipelined: 1 instruction / 1 cycle (short clock period, but 5 cycles latency).</p>
+
+    <p><strong>Key Trade-off:</strong> Pipelining increases throughput by ~5x at the cost of area (+pipeline registers) and complexity (hazards).</p>
+
+    <p><strong>Real-Life Application:</strong> All modern CPUs use pipelining; single‑cycle is only used in very simple academic cores.</p>
+</div>
+
+<!-- ===================== DAY 59 ===================== -->
+<div class="day-card">
+    <h3>Day 59 <span class="topic">— RISC‑V Pipeline: Full Integration &amp; Verification</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> February 28, 2026</p>
+    <p><strong>Core Principle:</strong> All pipeline stages, hazard units, and control logic integrated into a single working pipelined RISC‑V CPU.</p>
+
+    <p><strong>Key Achievement:</strong> 5‑stage pipeline running a multi-instruction test program with correct register values and memory writes.</p>
+
+    <p><strong>Real-Life Application:</strong> This is the architecture used in real RISC‑V cores like the SiFive E31 and the PULP Platform.</p>
+</div>
+
+<!-- ===================== DAY 60 ===================== -->
+<div class="day-card">
+    <h3>Day 60 <span class="topic">— Optional: Out‑of‑Order Execution (Theory)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> March 1, 2026</p>
+    <p><strong>Core Principle:</strong> OoO execution reorders instructions to avoid stalls, using reservation stations and reorder buffers.</p>
+
+    <p><strong>Key Insight:</strong> OoO is not required for RISC‑V compliance, but is used in high‑performance cores (e.g., SiFive U series).</p>
+</div>
+
+<!-- ===================== DAY 61 ===================== -->
+<div class="day-card">
+    <h3>Day 61 <span class="topic">— Optional: Superscalar Execution (Theory)</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> March 2, 2026</p>
+    <p><strong>Core Principle:</strong> Superscalar cores fetch and execute >1 instruction per cycle using multiple execution units.</p>
+
+    <p><strong>Key Insight:</strong> RISC‑V can be superscalar; commercial cores (e.g., SiFive P550) implement this.</p>
+</div>
+
+<!-- ===================== DAY 62 ===================== -->
+<div class="day-card">
+    <h3>Day 62 <span class="topic">— Final: Pipelined RISC‑V Core Checklist</span> <span class="badge-new">New</span></h3>
+    <p><strong>Date:</strong> March 3, 2026</p>
+    <p><strong>Core Principle:</strong> A complete checklist of all modules, verifications, and improvements for your pipelined RISC‑V core.</p>
+
+    <p><strong>Checklist:</strong></p>
+    <ul>
+        <li>✅ 5‑stage pipeline (IF/ID/EX/MEM/WB)</li>
+        <li>✅ Pipeline registers (IF/ID, ID/EX, EX/MEM, MEM/WB)</li>
+        <li>✅ Forwarding unit (data hazards)</li>
+        <li>✅ Hazard detection (load‑use stalls)</li>
+        <li>✅ Branch flushing (control hazards)</li>
+        <li>✅ Test program verified</li>
+        <li>✅ CPI measured</li>
+        <li>✅ GitHub repo updated</li>
+        <li>✅ LinkedIn posts complete</li>
+    </ul>
+
+    <p><strong>Real-Life Application:</strong> This checklist is identical to what RTL design teams use before tapeout.</p>
+</div>
+
+       
 </html>
